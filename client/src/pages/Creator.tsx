@@ -8,12 +8,15 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Download, Sparkles, RefreshCw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import type { AvatarRequest, Avatar, User } from "@shared/schema";
 
-export default function Creator() {
+function CreatorPage() {
   const { toast } = useToast();
+  const { userData } = useAuth();
   const [formData, setFormData] = useState<Partial<AvatarRequest>>({
-    userId: "demo",
+    userId: userData?.uid || "demo",
     gender: "female",
     age: "young-adult",
     ethnicity: "mixed",
@@ -30,17 +33,15 @@ export default function Creator() {
 
   const [generatedAvatar, setGeneratedAvatar] = useState<Avatar | null>(null);
 
-  // Fetch user data
-  const { data: user } = useQuery<User>({
-    queryKey: ["/api/user/demo"],
-  });
+  // Use Firebase user data from AuthContext
+  const user = userData;
 
   // Generate avatar mutation
   const generateMutation = useMutation({
     mutationFn: async (request: AvatarRequest) => {
       return await apiRequest("/api/avatars/generate", {
         method: "POST",
-        body: request,
+        body: { ...request, userId: userData?.uid },
       });
     },
     onSuccess: (data) => {
@@ -49,9 +50,8 @@ export default function Creator() {
         title: "✨ Avatar Created!",
         description: `Credits remaining: ${data.creditsRemaining}`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/demo"] });
       queryClient.invalidateQueries({ queryKey: ["/api/avatars"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/avatars/user", "demo"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/avatars/user", userData?.uid] });
     },
     onError: (error: any) => {
       toast({
@@ -259,5 +259,13 @@ function FormField({ label, children, testId }: { label: string; children: React
       <Label className="text-sm font-medium text-gray-700 mb-2 block" data-testid={testId}>{label}</Label>
       {children}
     </div>
+  );
+}
+
+export default function Creator() {
+  return (
+    <ProtectedRoute>
+      <CreatorPage />
+    </ProtectedRoute>
   );
 }

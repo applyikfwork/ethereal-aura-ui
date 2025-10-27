@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { IStorage } from "./storage";
 import { avatarRequestSchema, type AvatarRequest } from "@shared/schema";
+import { generateAvatarWithGemini, enhancePromptWithGemini, generateAvatarPrompt } from "./gemini";
 
 export function registerRoutes(app: Express, storage: IStorage) {
   // Get user profile
@@ -36,24 +37,36 @@ export function registerRoutes(app: Express, storage: IStorage) {
         return res.status(403).json({ error: "HD sizes require premium. Upgrade now!" });
       }
 
-      // Generate prompt from request
-      const prompt = generatePrompt(request);
-
-      // For now, use placeholder images
-      // TODO: Integrate real AI generation (OpenAI DALL-E, Replicate, etc.)
-      const placeholderUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
+      // Generate avatar using Gemini (with fallback to placeholder)
+      let imageUrl: string;
+      let prompt: string;
+      
+      try {
+        const result = await generateAvatarWithGemini(request);
+        imageUrl = result.imageUrl;
+        prompt = result.prompt;
+      } catch (error) {
+        console.warn("Gemini generation failed, using fallback:", error);
+        prompt = generateAvatarPrompt(request);
+        // Better placeholder with more variety based on request
+        const style = request.artStyle || 'avataaars';
+        const seed = `${request.gender}-${request.age}-${Date.now()}`;
+        imageUrl = `https://api.dicebear.com/7.x/${style === 'realistic' ? 'avataaars' : style === 'anime' ? 'big-smile' : 'bottts'}/svg?seed=${seed}`;
+      }
       
       const avatar = await storage.createAvatar({
         userId,
         prompt,
         request,
         urls: {
-          normal: placeholderUrl,
-          thumbnail: placeholderUrl,
-          stylized: isPremium ? placeholderUrl : undefined,
+          normal: imageUrl,
+          thumbnail: imageUrl,
+          stylized: isPremium ? imageUrl : undefined,
         },
         size: request.size,
         isPremium,
+        isPublic: true,
+        likes: 0,
       });
 
       // Deduct credits for free users
@@ -88,34 +101,19 @@ export function registerRoutes(app: Express, storage: IStorage) {
     }
     res.json(user);
   });
-}
-
-// Helper function to generate prompt from request
-function generatePrompt(request: AvatarRequest): string {
-  const { gender, age, ethnicity, hairStyle, hairColor, outfit, accessories, background, artStyle, auraEffect, pose } = request;
   
-  let prompt = `Create a high-quality ${artStyle} style avatar portrait of a ${age} ${gender}`;
-  prompt += `, ${ethnicity} ethnicity`;
-  prompt += `, with ${hairStyle} ${hairColor} hair`;
-  prompt += `, wearing ${outfit}`;
-  
-  if (accessories.length > 0) {
-    prompt += `, with ${accessories.join(", ")}`;
-  }
-  
-  prompt += `. ${pose} view`;
-  
-  if (auraEffect !== "none") {
-    prompt += `, with ${auraEffect} effect around the character`;
-  }
-  
-  if (background === "transparent") {
-    prompt += `, transparent background`;
-  } else if (background === "gradient") {
-    prompt += `, soft gradient background`;
-  }
-  
-  prompt += `. High detail, professional quality, square composition.`;
-  
-  return prompt;
+  // Enhance prompt with Gemini AI
+  app.post("/api/prompt/enhance", async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+      
+      const enhancedPrompt = await enhancePromptWithGemini(prompt);
+      res.json({ enhancedPrompt });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to enhance prompt" });
+    }
+  });
 }

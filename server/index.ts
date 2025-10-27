@@ -1,13 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite } from "./vite";
-import { MemStorage } from "./storage";
+import { FirestoreStorage, MemStorage } from "./storage";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const storage = new MemStorage();
+// Use Firestore for persistent storage if Firebase credentials are available
+// Otherwise fall back to in-memory storage for development
+const useFirestore = process.env.VITE_FIREBASE_PROJECT_ID && 
+                     process.env.FIREBASE_CLIENT_EMAIL && 
+                     process.env.FIREBASE_PRIVATE_KEY;
+
+const storage = useFirestore ? new FirestoreStorage() : new MemStorage();
+console.log(`Using ${useFirestore ? 'Firestore' : 'in-memory'} storage`);
 
 app.use((req, res, next) => {
   const start = Date.now();

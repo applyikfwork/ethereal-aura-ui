@@ -1,28 +1,73 @@
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Crown, Sparkles } from "lucide-react";
+import { Loader2, Crown, Sparkles, Camera, Upload } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { storage, db, auth } from "@/config/firebase";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import type { Avatar, User } from "@shared/schema";
 
-export default function Profile() {
+function ProfilePage() {
   const { toast } = useToast();
+  const { userData, user: authUser } = useAuth();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch user data
-  const { data: user, isLoading: userLoading } = useQuery<User>({
-    queryKey: ["/api/user/demo"],
-  });
+  // Use Firebase user data from AuthContext
+  const user = userData;
+
+  const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !authUser || !userData) return;
+
+    setUploading(true);
+    try {
+      // Upload to Firebase Storage
+      const storageRef = ref(storage, `profile-pictures/${userData.uid}`);
+      await uploadBytes(storageRef, file);
+      const photoURL = await getDownloadURL(storageRef);
+
+      // Update Firebase Auth profile
+      await updateProfile(authUser, { photoURL });
+
+      // Update Firestore user document
+      const userRef = doc(db, 'users', userData.uid);
+      await updateDoc(userRef, { photoURL });
+
+      toast({
+        title: "Profile picture updated!",
+        description: "Your profile picture has been successfully updated.",
+      });
+
+      // Refresh the page to show new profile picture
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message || "Failed to upload profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Fetch user's avatars
   const { data: avatars, isLoading: avatarsLoading } = useQuery<Avatar[]>({
-    queryKey: ["/api/avatars/user", "demo"],
+    queryKey: ["/api/avatars/user", userData?.uid],
+    enabled: !!userData?.uid,
   });
 
   // Upgrade mutation
   const upgradeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/user/demo/upgrade", {
+      return await apiRequest(`/api/user/${userData?.uid}/upgrade`, {
         method: "POST",
       });
     },
@@ -31,17 +76,8 @@ export default function Profile() {
         title: "🎉 Upgraded to Premium!",
         description: "You now have unlimited avatar generations!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/demo"] });
     },
   });
-
-  if (userLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-6">
@@ -54,12 +90,44 @@ export default function Profile() {
         <Card className="glass-card p-8 mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center text-white text-2xl font-bold">
-                {user?.name.charAt(0)}
+              <div className="relative group">
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Profile"
+                    className="w-20 h-20 rounded-full object-cover border-4 border-purple-200"
+                    data-testid="img-profile-picture"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-purple-200">
+                    {(user?.displayName || user?.email)?.charAt(0) || 'U'}
+                  </div>
+                )}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute bottom-0 right-0 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full shadow-lg transition-all group-hover:scale-110 disabled:opacity-50"
+                  data-testid="button-upload-profile-pic"
+                >
+                  {uploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureUpload}
+                  className="hidden"
+                  data-testid="input-profile-picture"
+                />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-800" data-testid="text-username">{user?.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-800" data-testid="text-username">{user?.displayName || user?.email}</h2>
                 <p className="text-gray-600" data-testid="text-user-email">{user?.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">Click camera icon to update photo</p>
               </div>
             </div>
 
@@ -136,5 +204,13 @@ export default function Profile() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Profile() {
+  return (
+    <ProtectedRoute>
+      <ProfilePage />
+    </ProtectedRoute>
   );
 }

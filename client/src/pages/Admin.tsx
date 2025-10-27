@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Key, Image as ImageIcon, Users, Sparkles } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Settings, Key, Image as ImageIcon, Users, Sparkles, Shield, TrendingUp, UserPlus } from 'lucide-react';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { db, storage } from '@/config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { AdminSettings } from '@shared/schema';
@@ -17,7 +17,6 @@ function AdminPanel() {
   const { userData } = useAuth();
   const { toast } = useToast();
   const [settings, setSettings] = useState<AdminSettings>({
-    geminiApiKey: '',
     faviconUrl: '',
     siteName: 'Aura Avatar Studio',
     allowSignups: true,
@@ -31,10 +30,48 @@ function AdminPanel() {
   });
   const [loading, setLoading] = useState(false);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    premiumUsers: 0,
+    avatarsGenerated: 0,
+    loading: true,
+  });
 
   useEffect(() => {
     loadSettings();
+    loadStats();
   }, []);
+
+  const loadStats = async () => {
+    try {
+      setStats(prev => ({ ...prev, loading: true }));
+      
+      // Count total users
+      const usersCol = collection(db, 'users');
+      const usersSnapshot = await getCountFromServer(usersCol);
+      const totalUsers = usersSnapshot.data().count;
+      
+      // Count premium users
+      const premiumQuery = query(usersCol, where('isPremium', '==', true));
+      const premiumSnapshot = await getCountFromServer(premiumQuery);
+      const premiumUsers = premiumSnapshot.data().count;
+      
+      // Count total avatars (you'll need to create an 'avatars' collection in Firestore)
+      const avatarsCol = collection(db, 'avatars');
+      const avatarsSnapshot = await getCountFromServer(avatarsCol);
+      const avatarsGenerated = avatarsSnapshot.data().count;
+      
+      setStats({
+        totalUsers,
+        premiumUsers,
+        avatarsGenerated,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+      setStats(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -49,32 +86,6 @@ function AdminPanel() {
     }
   };
 
-  const handleSaveApiKey = async () => {
-    setLoading(true);
-    try {
-      const settingsRef = doc(db, 'settings', 'admin');
-      const updatedSettings = {
-        ...settings,
-        updatedAt: new Date().toISOString(),
-      };
-      
-      await setDoc(settingsRef, updatedSettings);
-      setSettings(updatedSettings);
-      
-      toast({
-        title: 'API Key saved',
-        description: 'Gemini API key has been updated successfully',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to save',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleFaviconUpload = async () => {
     if (!faviconFile) return;
@@ -158,11 +169,15 @@ function AdminPanel() {
         </p>
       </div>
 
-      <Tabs defaultValue="api" className="space-y-4">
+      <Tabs defaultValue="stats" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="stats" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Dashboard
+          </TabsTrigger>
           <TabsTrigger value="api" className="flex items-center gap-2">
-            <Key className="w-4 h-4" />
-            API Keys
+            <Shield className="w-4 h-4" />
+            API Setup
           </TabsTrigger>
           <TabsTrigger value="favicon" className="flex items-center gap-2">
             <ImageIcon className="w-4 h-4" />
@@ -172,53 +187,56 @@ function AdminPanel() {
             <Settings className="w-4 h-4" />
             Settings
           </TabsTrigger>
-          <TabsTrigger value="stats" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Stats
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="api" className="space-y-4">
-          <Card className="glass-card">
+          <Card className="glass-card border-2 border-purple-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                Gemini AI API Key
+                <Shield className="w-5 h-5 text-purple-600" />
+                Secure API Configuration
               </CardTitle>
               <CardDescription>
-                Configure your Google Gemini API key for AI-powered avatar generation
+                API keys are securely managed through Replit Secrets for maximum security
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="geminiApiKey">API Key</Label>
-                <Input
-                  id="geminiApiKey"
-                  type="password"
-                  placeholder="Enter your Gemini API key"
-                  value={settings.geminiApiKey || ''}
-                  onChange={(e) => setSettings({ ...settings, geminiApiKey: e.target.value })}
-                  data-testid="input-gemini-api-key"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Get your API key from{' '}
-                  <a
-                    href="https://makersuite.google.com/app/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    Google AI Studio
-                  </a>
+              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  Gemini AI API Key (Prompt Enhancement)
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  For security reasons, the Gemini API key is stored as a Replit Secret. Gemini enhances avatar prompts but doesn't generate images directly.
+                </p>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Get your API key from{' '}
+                    <a
+                      href="https://makersuite.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-600 hover:underline font-medium"
+                    >
+                      Google AI Studio
+                    </a>
+                  </li>
+                  <li>Go to the Replit Secrets tab (Tools → Secrets)</li>
+                  <li>Add a new secret with key: <code className="bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">GEMINI_API_KEY</code></li>
+                  <li>Paste your API key as the value</li>
+                  <li>The application will use Gemini to enhance avatar prompts</li>
+                </ol>
+              </div>
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Note:</strong> Gemini is an LLM and doesn't generate images directly. To enable real avatar generation, you need to integrate an image generation service (e.g., DALL-E, Stable Diffusion, or Imagen). The system currently uses enhanced prompts with placeholder avatars. Update <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">server/gemini.ts</code> to add your preferred image generation service.
                 </p>
               </div>
-              <Button
-                onClick={handleSaveApiKey}
-                disabled={loading}
-                data-testid="button-save-api-key"
-              >
-                {loading ? 'Saving...' : 'Save API Key'}
-              </Button>
+              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <strong>Security Best Practice:</strong> Never store API keys in your database or frontend code.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -325,37 +343,89 @@ function AdminPanel() {
 
         <TabsContent value="stats" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Card className="glass-card border-2 border-sky-200 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
+                <Users className="w-5 h-5 text-sky-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold" data-testid="text-total-users">
-                  Coming Soon
+                <div className="text-3xl font-bold text-sky-600" data-testid="text-total-users">
+                  {stats.loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    stats.totalUsers
+                  )}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
               </CardContent>
             </Card>
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Avatars Generated</CardTitle>
+            <Card className="glass-card border-2 border-purple-200 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Avatars Generated</CardTitle>
+                <Sparkles className="w-5 h-5 text-purple-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold" data-testid="text-avatars-generated">
-                  Coming Soon
+                <div className="text-3xl font-bold text-purple-600" data-testid="text-avatars-generated">
+                  {stats.loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    stats.avatarsGenerated
+                  )}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">Total creations</p>
               </CardContent>
             </Card>
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Premium Users</CardTitle>
+            <Card className="glass-card border-2 border-pink-200 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Premium Users</CardTitle>
+                <UserPlus className="w-5 h-5 text-pink-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold" data-testid="text-premium-users">
-                  Coming Soon
+                <div className="text-3xl font-bold text-pink-600" data-testid="text-premium-users">
+                  {stats.loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    stats.premiumUsers
+                  )}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats.totalUsers > 0 ? `${Math.round((stats.premiumUsers / stats.totalUsers) * 100)}% conversion` : 'No users yet'}
+                </p>
               </CardContent>
             </Card>
           </div>
+          
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common administrative tasks</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <Button 
+                variant="outline" 
+                className="justify-start"
+                onClick={loadStats}
+                disabled={stats.loading}
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Refresh Statistics
+              </Button>
+              <Button 
+                variant="outline" 
+                className="justify-start"
+                onClick={() => window.open('https://console.firebase.google.com/', '_blank')}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Open Firebase Console
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

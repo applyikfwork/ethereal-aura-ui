@@ -9,6 +9,7 @@ export const userSchema = z.object({
   uid: z.string(),
   email: z.string().email().nullable(),
   displayName: z.string().nullable(),
+  name: z.string().nullable().optional(),
   photoURL: z.string().url().nullable().optional(),
   role: userRoleSchema.default("user"),
   credits: z.number().default(10),
@@ -19,8 +20,8 @@ export const userSchema = z.object({
 export type User = z.infer<typeof userSchema>;
 
 // Admin Settings Schema (stored in Firestore)
+// Note: API keys are stored in Replit Secrets for security, not in this schema
 export const adminSettingsSchema = z.object({
-  geminiApiKey: z.string().optional(),
   faviconUrl: z.string().url().optional(),
   siteName: z.string().default("Aura Avatar Studio"),
   allowSignups: z.boolean().default(true),
@@ -61,8 +62,13 @@ export const avatarSchema = z.object({
   userId: z.string(),
   prompt: z.string(),
   request: avatarRequestSchema,
-  imageUrl: z.string(),
+  imageUrl: z.string().optional(),
   thumbnailUrl: z.string().optional(),
+  urls: z.object({
+    normal: z.string(),
+    thumbnail: z.string(),
+    stylized: z.string().optional(),
+  }).optional(),
   size: z.string(),
   isPremium: z.boolean().default(false),
   isPublic: z.boolean().default(true),
