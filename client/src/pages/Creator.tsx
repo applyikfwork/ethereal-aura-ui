@@ -5,16 +5,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Download, Sparkles, RefreshCw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ImageUpload from "@/components/ImageUpload";
 import type { AvatarRequest, Avatar, User } from "@shared/schema";
 
 function CreatorPage() {
   const { toast } = useToast();
   const { userData } = useAuth();
+  const [creationMode, setCreationMode] = useState<'custom' | 'photo'>('custom');
+  const [uploadedImage, setUploadedImage] = useState<{file: File, url: string} | null>(null);
   const [formData, setFormData] = useState<Partial<AvatarRequest>>({
     userId: userData?.uid || "demo",
     gender: "female",
@@ -76,6 +80,11 @@ function CreatorPage() {
     }
   };
 
+  const handleImageSelected = (file: File, croppedUrl: string) => {
+    setUploadedImage({ file, url: croppedUrl });
+    setFormData({ ...formData, uploadedImageUrl: croppedUrl });
+  };
+
   return (
     <div className="min-h-screen pt-32 pb-20 px-6">
       <div className="max-w-7xl mx-auto">
@@ -89,10 +98,17 @@ function CreatorPage() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Left Panel - Customization Options */}
           <div className="space-y-6">
-            <Card className="glass-card p-6">
-              <h2 className="text-2xl font-bold mb-6 text-gray-800">Customize Your Avatar</h2>
+            <Tabs value={creationMode} onValueChange={(value) => setCreationMode(value as 'custom' | 'photo')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="custom" data-testid="tab-custom-avatar">Custom Avatar</TabsTrigger>
+                <TabsTrigger value="photo" data-testid="tab-photo-avatar">Photo-Based</TabsTrigger>
+              </TabsList>
 
-              <div className="space-y-4">
+              <TabsContent value="custom" className="space-y-6">
+                <Card className="glass-card p-6">
+                  <h2 className="text-2xl font-bold mb-6 text-gray-800">Customize Your Avatar</h2>
+
+                  <div className="space-y-4">
                 <FormField label="Gender" testId="select-gender">
                   <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value as any })}>
                     <SelectTrigger data-testid="input-gender">
@@ -180,7 +196,63 @@ function CreatorPage() {
                 </FormField>
               </div>
             </Card>
-          </div>
+          </TabsContent>
+
+          <TabsContent value="photo" className="space-y-6">
+            <ImageUpload 
+              onImageSelected={handleImageSelected}
+              currentImage={uploadedImage?.url}
+            />
+            
+            {uploadedImage && (
+              <Card className="glass-card p-6">
+                <h3 className="text-xl font-bold mb-4 text-gray-800">Transformation Style</h3>
+                <div className="space-y-4">
+                  <FormField label="Art Style" testId="select-photo-art-style">
+                    <Select value={formData.artStyle} onValueChange={(value) => setFormData({ ...formData, artStyle: value as any })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="realistic">Realistic</SelectItem>
+                        <SelectItem value="anime">Anime</SelectItem>
+                        <SelectItem value="cartoon">Cartoon</SelectItem>
+                        <SelectItem value="fantasy">Fantasy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+
+                  <FormField label="Background" testId="select-photo-background">
+                    <Select value={formData.background} onValueChange={(value) => setFormData({ ...formData, background: value as any })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gradient">Gradient</SelectItem>
+                        <SelectItem value="transparent">Transparent</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+
+                  <FormField label="Aura Effect" testId="select-photo-aura">
+                    <Select value={formData.auraEffect} onValueChange={(value) => setFormData({ ...formData, auraEffect: value as any })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light-glow">Light Glow</SelectItem>
+                        <SelectItem value="holographic">Holographic</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
 
           {/* Right Panel - Preview & Actions */}
           <div className="space-y-6">

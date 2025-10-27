@@ -39,6 +39,7 @@ export type AdminSettings = z.infer<typeof adminSettingsSchema>;
 // Avatar generation request
 export const avatarRequestSchema = z.object({
   userId: z.string().optional(),
+  uploadedImageUrl: z.string().optional(),
   gender: z.enum(["male", "female", "non-binary"]),
   age: z.enum(["child", "teen", "young-adult", "adult", "senior"]),
   ethnicity: z.string(),
@@ -68,7 +69,15 @@ export const avatarSchema = z.object({
     normal: z.string(),
     thumbnail: z.string(),
     stylized: z.string().optional(),
+    profile: z.string().optional(),
+    story: z.string().optional(),
+    post: z.string().optional(),
+    hd: z.string().optional(),
   }).optional(),
+  variations: z.array(z.object({
+    style: z.string(),
+    url: z.string(),
+  })).optional(),
   size: z.string(),
   isPremium: z.boolean().default(false),
   isPublic: z.boolean().default(true),
