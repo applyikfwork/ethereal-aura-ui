@@ -18,7 +18,11 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": false
+    "declaration": false,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    }
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist", "client"]

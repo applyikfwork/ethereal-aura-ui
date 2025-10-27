@@ -1,4 +1,4 @@
-import type { Avatar, AvatarRequest, User } from "@shared/schema";
+import type { Avatar, User } from "@shared/schema";
 
 export interface IStorage {
   // Avatar methods
