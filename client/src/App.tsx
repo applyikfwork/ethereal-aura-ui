@@ -13,6 +13,8 @@ import type { AdminSettings } from "@shared/schema";
 import Home from "./pages/Home";
 import Creator from "./pages/Creator";
 import Gallery from "./pages/Gallery";
+import Trending from "./pages/Trending";
+import Leaderboard from "./pages/Leaderboard";
 import Premium from "./pages/Premium";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
@@ -66,6 +68,8 @@ const App = () => {
             <Route path="/" component={Home} />
             <Route path="/creator" component={Creator} />
             <Route path="/gallery" component={Gallery} />
+            <Route path="/trending" component={Trending} />
+            <Route path="/leaderboard" component={Leaderboard} />
             <Route path="/premium" component={Premium} />
             <Route path="/profile" component={Profile} />
             <Route path="/login" component={Login} />

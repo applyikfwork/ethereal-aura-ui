@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Sparkles, Image, Award, User, Home, LogIn, LogOut, Settings } from "lucide-react";
+import { Sparkles, Image, Award, User, Home, LogIn, LogOut, Settings, TrendingUp, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +40,7 @@ export function Navbar() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <NavLink 
               href="/" 
               icon={<Home className="w-4 h-4" />} 
@@ -58,6 +58,18 @@ export function Navbar() {
               icon={<Image className="w-4 h-4" />} 
               label="Gallery" 
               active={isActive("/gallery")}
+            />
+            <NavLink 
+              href="/trending" 
+              icon={<TrendingUp className="w-4 h-4" />} 
+              label="Trending" 
+              active={isActive("/trending")}
+            />
+            <NavLink 
+              href="/leaderboard" 
+              icon={<Trophy className="w-4 h-4" />} 
+              label="Leaderboard" 
+              active={isActive("/leaderboard")}
             />
             <NavLink 
               href="/premium" 

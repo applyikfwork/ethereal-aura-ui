@@ -15,6 +15,16 @@ export const userSchema = z.object({
   credits: z.number().default(10),
   isPremium: z.boolean().default(false),
   createdAt: z.string(),
+  // Social stats
+  totalLikes: z.number().default(0),
+  totalAvatars: z.number().default(0),
+  totalShares: z.number().default(0),
+  // Referral system
+  referralCode: z.string().optional(),
+  referredBy: z.string().optional(),
+  referralCount: z.number().default(0),
+  // Email newsletter
+  subscribedToNewsletter: z.boolean().default(false),
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -57,10 +67,25 @@ export const avatarRequestSchema = z.object({
 
 export type AvatarRequest = z.infer<typeof avatarRequestSchema>;
 
+// Comment schema
+export const commentSchema = z.object({
+  id: z.string(),
+  avatarId: z.string(),
+  userId: z.string(),
+  userName: z.string(),
+  userPhoto: z.string().optional(),
+  text: z.string(),
+  createdAt: z.string(),
+});
+
+export type Comment = z.infer<typeof commentSchema>;
+
 // Generated avatar
 export const avatarSchema = z.object({
   id: z.string(),
   userId: z.string(),
+  userName: z.string().optional(),
+  userPhoto: z.string().optional(),
   prompt: z.string(),
   request: avatarRequestSchema,
   imageUrl: z.string().optional(),
@@ -73,6 +98,7 @@ export const avatarSchema = z.object({
     story: z.string().optional(),
     post: z.string().optional(),
     hd: z.string().optional(),
+    animated: z.string().optional(), // GIF/MP4 for profile videos
   }).optional(),
   variations: z.array(z.object({
     style: z.string(),
@@ -82,6 +108,13 @@ export const avatarSchema = z.object({
   isPremium: z.boolean().default(false),
   isPublic: z.boolean().default(true),
   likes: z.number().default(0),
+  likedBy: z.array(z.string()).default([]), // User IDs who liked this
+  shares: z.number().default(0),
+  comments: z.number().default(0),
+  hashtags: z.array(z.string()).default([]),
+  isFeatured: z.boolean().default(false),
+  isRemixable: z.boolean().default(true),
+  remixedFrom: z.string().optional(), // Original avatar ID if this is a remix
   createdAt: z.string(),
 });
 
@@ -101,6 +134,50 @@ export type ApiResponse = z.infer<typeof apiResponseSchema>;
 export const avatarGenerationResponseSchema = z.object({
   avatar: avatarSchema,
   creditsRemaining: z.union([z.number(), z.literal("unlimited")]),
+  hashtags: z.array(z.string()).optional(),
 });
 
 export type AvatarGenerationResponse = z.infer<typeof avatarGenerationResponseSchema>;
+
+// Referral schema
+export const referralSchema = z.object({
+  id: z.string(),
+  referrerId: z.string(),
+  referredUserId: z.string(),
+  creditsAwarded: z.number().default(5),
+  createdAt: z.string(),
+});
+
+export type Referral = z.infer<typeof referralSchema>;
+
+// Platform stats schema
+export const platformStatsSchema = z.object({
+  totalUsers: z.number().default(0),
+  totalAvatars: z.number().default(0),
+  premiumUsers: z.number().default(0),
+  lastUpdated: z.string(),
+});
+
+export type PlatformStats = z.infer<typeof platformStatsSchema>;
+
+// Leaderboard entry schema
+export const leaderboardEntrySchema = z.object({
+  userId: z.string(),
+  userName: z.string(),
+  userPhoto: z.string().optional(),
+  totalLikes: z.number(),
+  totalShares: z.number(),
+  totalAvatars: z.number(),
+  rank: z.number(),
+});
+
+export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
+
+// Newsletter subscription schema
+export const newsletterSubscriptionSchema = z.object({
+  email: z.string().email(),
+  userId: z.string().optional(),
+  subscribedAt: z.string(),
+});
+
+export type NewsletterSubscription = z.infer<typeof newsletterSubscriptionSchema>;

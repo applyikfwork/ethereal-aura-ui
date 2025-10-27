@@ -1,8 +1,20 @@
 import { Link } from "wouter";
-import { Sparkles, Zap, Shield, Award } from "lucide-react";
+import { Sparkles, Zap, Shield, Award, Users, Image as ImageIcon, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
+import { useAuth } from "@/contexts/AuthContext";
+import type { PlatformStats } from "@shared/schema";
 
 export default function Home() {
+  const { userData } = useAuth();
+  
+  // Fetch platform stats for social proof
+  const { data: stats } = useQuery<PlatformStats>({
+    queryKey: ['/api/stats'],
+  });
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -58,17 +70,38 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Demo Avatar Preview */}
-          <div className="mt-16">
-            <div className="inline-block glass-card p-2 rounded-3xl hover-lift">
-              <div className="relative w-64 h-64 bg-gradient-to-br from-purple-100 to-sky-100 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-sky-400/20"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Sparkles className="w-24 h-24 text-purple-400 animate-glow" />
+          {/* Social Proof Stats */}
+          {stats && (
+            <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Users className="w-6 h-6 text-purple-600" />
+                  <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <AnimatedCounter end={stats.totalUsers} suffix="+" />
+                  </div>
                 </div>
+                <p className="text-gray-600 font-medium">Creators</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <ImageIcon className="w-6 h-6 text-sky-600" />
+                  <div className="text-4xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
+                    <AnimatedCounter end={stats.totalAvatars} suffix="+" />
+                  </div>
+                </div>
+                <p className="text-gray-600 font-medium">Avatars Created</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Crown className="w-6 h-6 text-yellow-600" />
+                  <div className="text-4xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                    <AnimatedCounter end={stats.premiumUsers} suffix="+" />
+                  </div>
+                </div>
+                <p className="text-gray-600 font-medium">Premium Users</p>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -96,6 +129,13 @@ export default function Home() {
               description="Premium users get ultra-high resolution downloads"
             />
           </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="py-20 px-6 bg-gradient-to-br from-purple-50 to-sky-50">
+        <div className="max-w-2xl mx-auto">
+          <NewsletterSignup userId={userData?.uid} />
         </div>
       </section>
     </div>
