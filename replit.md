@@ -6,6 +6,7 @@ Aura is a fully functional AI-powered avatar generation platform built with Reac
 
 ## Recent Changes (October 27, 2025)
 
+### Phase 1: Initial Setup
 - ✅ Migrated from Lovable to Replit full-stack template
 - ✅ Implemented complete data schema for avatars, users, and credits
 - ✅ Built all backend API routes (avatar generation, user management)
@@ -19,7 +20,17 @@ Aura is a fully functional AI-powered avatar generation platform built with Reac
 - ✅ Implemented credit system (free users: 10 credits, premium: unlimited)
 - ✅ Fixed credit balance reporting bug
 - ✅ Added proper query invalidation for real-time UI updates
-- 🔄 Using placeholder images (DiceBear API) - ready for AI integration
+
+### Phase 2: Photo Upload & AI Integration
+- ✅ **Image Upload System**: Drag-and-drop file upload, camera capture, and image cropping
+- ✅ **Replicate AI Integration**: Real AI-powered avatar generation from photos
+- ✅ **Photo-to-Avatar Transformation**: Upload selfies and transform into various avatar styles
+- ✅ **Multiple Style Variations**: Generate 4-6 different styles (realistic, anime, cartoon, cyberpunk, watercolor, 3D)
+- ✅ **Background Removal API**: AI-powered background removal and replacement
+- ✅ **Multi-Format Export**: Generate avatars in Profile (400x400), Story (1080x1920), Post (1080x1080), HD (2048x2048) sizes
+- ✅ **Two Creation Modes**: 
+  - Custom Avatar: Create from scratch with customization options
+  - Photo-Based: Upload photo and transform with AI
 
 ## User Preferences
 
@@ -107,17 +118,21 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Integration
 
-**Placeholder Implementation**
-- Currently uses DiceBear API for placeholder avatar generation
-- Generates unique SVG avatars based on timestamp seed
+**Replicate API Integration**
+- Uses Replicate for real AI-powered avatar generation
+- Stable Diffusion SDXL model for high-quality photo transformations
+- Face-preserving transformations that maintain user's facial features
+- Style variations generator for multiple artistic interpretations
+- Background removal using rembg model
+- Fallback to DiceBear API for custom (non-photo) avatars
 
-**Architecture for Real AI**
-- Prompt generation function converts user selections to descriptive text
-- Ready to integrate with:
-  - OpenAI DALL-E API
-  - Replicate (Stable Diffusion)
-  - Other image generation services
-- Response structure includes multiple URL variants (normal, thumbnail, stylized)
+**AI Features**
+- Photo-to-avatar transformation with facial feature preservation
+- Multiple art styles: realistic, anime, cartoon, fantasy, cyberpunk, watercolor, 3D
+- Automatic prompt enhancement and optimization
+- Background removal and replacement
+- Multi-format exports for social media
+- Batch variation generation (premium feature)
 
 ### Avatar Generation Flow
 
@@ -173,10 +188,16 @@ Preferred communication style: Simple, everyday language.
 - eslint & typescript-eslint - Code linting
 - @types/express - TypeScript definitions
 
+**Current Integrations**
+- ✅ Firebase Authentication (Email/Password + Google Sign-In)
+- ✅ Firebase Firestore for user data and settings
+- ✅ Firebase Storage for uploaded images
+- ✅ Replicate API for AI avatar generation
+- ✅ DiceBear API for placeholder/custom avatars
+
 **Future Integration Points**
-- Database ORM (Drizzle recommended based on project structure)
-- PostgreSQL or similar relational database
-- AI image generation API (OpenAI, Replicate, etc.)
-- Authentication provider (Auth0, Clerk, or custom JWT)
-- Cloud storage for avatar images (AWS S3, Cloudinary)
 - Payment processing for premium upgrades (Stripe)
+- Social media sharing APIs (Instagram, Twitter, TikTok, Facebook)
+- Animated avatar generation (GIF/MP4)
+- Batch download with ZIP compression
+- Hashtag suggestion system
