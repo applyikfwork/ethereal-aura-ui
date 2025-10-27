@@ -61,7 +61,8 @@ export function registerRoutes(app: Express, storage: IStorage) {
         await storage.updateUserCredits(userId, user.credits - 1);
       }
 
-      res.json({ avatar, creditsRemaining: isPremium ? "unlimited" : user.credits - 1 });
+      const newCredits = user.credits - 1;
+      res.json({ avatar, creditsRemaining: isPremium ? "unlimited" : newCredits });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Invalid request" });
     }
