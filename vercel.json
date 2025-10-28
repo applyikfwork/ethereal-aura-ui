@@ -1,13 +1,21 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": null,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/:path*",
+      "destination": "/api"
+    },
+    {
+      "source": "/:path((?!api).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
 }
