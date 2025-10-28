@@ -2,7 +2,7 @@ import type { Express } from "express";
 import multer from "multer";
 import { IStorage } from "./storage";
 import { avatarRequestSchema } from "@shared/schema";
-import { generateAvatarWithGemini, enhancePromptWithGemini, generateAvatarPrompt } from "./gemini";
+import { generateAvatarWithGemini, enhancePromptWithGemini } from "./gemini";
 import { generateAvatarFromPhoto, generateStyleVariations, removeBackground, uploadImageToFirebase, resizeImage } from "./replicate-service";
 import { authenticateUser, type AuthenticatedRequest } from "./auth-middleware";
 
@@ -117,9 +117,17 @@ export function registerRoutes(app: Express, storage: IStorage) {
           if (isPremium) {
             variations = await generateStyleVariations(request.uploadedImageUrl, request);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Photo-based generation failed:", error);
-          return res.status(500).json({ error: "Failed to generate avatar from photo. Please try again." });
+          
+          // Check if error is due to missing API key
+          if (error.message && error.message.includes('REPLICATE_API_TOKEN')) {
+            return res.status(503).json({ 
+              error: "Photo transformation is temporarily unavailable. Please try the Custom Avatar mode instead." 
+            });
+          }
+          
+          return res.status(500).json({ error: "Failed to generate avatar from photo. Please try Custom Avatar mode." });
         }
       } 
       // Custom avatar generation (original flow)
@@ -129,11 +137,9 @@ export function registerRoutes(app: Express, storage: IStorage) {
           imageUrl = result.imageUrl;
           prompt = result.prompt;
         } catch (error) {
-          console.warn("Gemini generation failed, using fallback:", error);
-          prompt = generateAvatarPrompt(request);
-          const style = request.artStyle || 'avataaars';
-          const seed = `${request.gender}-${request.age}-${Date.now()}`;
-          imageUrl = `https://api.dicebear.com/7.x/${style === 'realistic' ? 'avataaars' : style === 'anime' ? 'big-smile' : 'bottts'}/svg?seed=${seed}`;
+          // This shouldn't fail since we have DiceBear fallback
+          console.warn("Custom avatar generation failed unexpectedly:", error);
+          return res.status(500).json({ error: "Failed to generate avatar. Please try again." });
         }
       }
 

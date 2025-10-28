@@ -3,10 +3,20 @@ import Replicate from 'replicate';
 import type { AvatarRequest } from '@shared/schema';
 
 let genAI: GoogleGenerativeAI | null = null;
+let replicate: Replicate | null = null;
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-});
+// Initialize Replicate lazily when API key is available
+function getReplicateClient(): Replicate | null {
+  if (replicate) return replicate;
+  
+  const apiToken = process.env.REPLICATE_API_TOKEN;
+  if (apiToken && apiToken.trim().length > 0) {
+    replicate = new Replicate({ auth: apiToken });
+    return replicate;
+  }
+  
+  return null;
+}
 
 export async function initializeGemini(apiKey: string) {
   genAI = new GoogleGenerativeAI(apiKey);
@@ -101,45 +111,75 @@ export async function generateAvatarWithGemini(
     enhancedPrompt = generateAvatarPrompt(request);
   }
 
-  // Generate image using Replicate SDXL
-  try {
-    console.log('Generating avatar with Replicate using prompt:', enhancedPrompt);
-    
-    const model = 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b';
-    
-    const output = await replicate.run(model as any, {
-      input: {
-        prompt: enhancedPrompt,
-        negative_prompt: 'low quality, blurry, distorted, disfigured, ugly, bad anatomy, multiple people, watermark, text',
-        num_outputs: 1,
-        guidance_scale: 7.5,
-        num_inference_steps: 30,
-        width: parseInt(request.size),
-        height: parseInt(request.size),
-      },
-    }) as string[];
+  // Try to generate image using Replicate SDXL if API key is available
+  const replicateClient = getReplicateClient();
+  
+  if (replicateClient) {
+    try {
+      console.log('Generating avatar with Replicate using prompt:', enhancedPrompt);
+      
+      const model = 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b';
+      
+      const output = await replicateClient.run(model as any, {
+        input: {
+          prompt: enhancedPrompt,
+          negative_prompt: 'low quality, blurry, distorted, disfigured, ugly, bad anatomy, multiple people, watermark, text',
+          num_outputs: 1,
+          guidance_scale: 7.5,
+          num_inference_steps: 30,
+          width: parseInt(request.size),
+          height: parseInt(request.size),
+        },
+      }) as string[];
 
-    const imageUrl = Array.isArray(output) ? output[0] : output;
-    
-    return {
-      imageUrl,
-      prompt: enhancedPrompt,
-    };
-  } catch (error) {
-    console.error('Replicate generation failed:', error);
-    
-    // Fallback to DiceBear if Replicate fails
-    const style = request.artStyle === 'anime' ? 'big-smile' : 
-                  request.artStyle === 'cartoon' ? 'bottts' : 'avataaars';
-    const seed = `${request.gender}-${request.age}-${Date.now()}-${Math.random()}`;
-    const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
-    
-    console.warn('Using fallback DiceBear avatar due to Replicate error');
-    return {
-      imageUrl: avatarUrl,
-      prompt: enhancedPrompt,
-    };
+      const imageUrl = Array.isArray(output) ? output[0] : output;
+      
+      return {
+        imageUrl,
+        prompt: enhancedPrompt,
+      };
+    } catch (error) {
+      console.error('Replicate generation failed:', error);
+    }
+  } else {
+    console.log('Replicate API not configured, using DiceBear fallback');
   }
+  
+  // Fallback to DiceBear - generate high-quality avatar based on parameters
+  const style = getDiceBearStyle(request.artStyle, request.gender);
+  const seed = generateDiceBearSeed(request);
+  const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+  
+  console.log('Using DiceBear avatar with style:', style);
+  return {
+    imageUrl: avatarUrl,
+    prompt: enhancedPrompt,
+  };
+}
+
+// Helper function to choose appropriate DiceBear style based on art style
+function getDiceBearStyle(artStyle: string, gender: string): string {
+  if (artStyle === 'anime' || artStyle === 'cartoon') {
+    return 'big-smile';
+  }
+  if (artStyle === 'fantasy') {
+    return 'adventurer';
+  }
+  // For realistic, use avataaars or personas based on gender
+  return gender === 'female' ? 'avataaars' : 'personas';
+}
+
+// Generate a unique but consistent seed based on avatar parameters
+function generateDiceBearSeed(request: AvatarRequest): string {
+  const parts = [
+    request.gender,
+    request.age,
+    request.ethnicity,
+    request.hairStyle.replace(/\s+/g, '-'),
+    request.hairColor.replace(/\s+/g, '-'),
+    Date.now().toString(),
+  ];
+  return parts.join('-').toLowerCase();
 }
 
 // Alternative: Use Gemini to enhance prompts for image generation services

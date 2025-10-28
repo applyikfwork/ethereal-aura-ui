@@ -1,9 +1,20 @@
 import Replicate from 'replicate';
 import type { AvatarRequest } from '@shared/schema';
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-});
+let replicate: Replicate | null = null;
+
+// Initialize Replicate lazily when API key is available
+function getReplicateClient(): Replicate | null {
+  if (replicate) return replicate;
+  
+  const apiToken = process.env.REPLICATE_API_TOKEN;
+  if (apiToken && apiToken.trim().length > 0) {
+    replicate = new Replicate({ auth: apiToken });
+    return replicate;
+  }
+  
+  return null;
+}
 
 interface GenerationResult {
   imageUrl: string;
@@ -15,6 +26,11 @@ export async function generateAvatarFromPhoto(
   imageUrl: string,
   request: AvatarRequest
 ): Promise<GenerationResult> {
+  const replicateClient = getReplicateClient();
+  if (!replicateClient) {
+    throw new Error('Photo-based avatar generation requires Replicate API. Please configure REPLICATE_API_TOKEN.');
+  }
+
   try {
     const { artStyle, background, auraEffect } = request;
 
@@ -53,7 +69,7 @@ export async function generateAvatarFromPhoto(
 
     const prompt = `transform this person into ${stylePrompt}${effectPrompt}, ${backgroundPrompt}, high quality, detailed, portrait`;
 
-    const output = await replicate.run(model as any, {
+    const output = await replicateClient.run(model as any, {
       input: {
         image: imageUrl,
         prompt: prompt,
@@ -78,6 +94,12 @@ export async function generateStyleVariations(
   imageUrl: string,
   _request: AvatarRequest
 ): Promise<Array<{ style: string; url: string }>> {
+  const replicateClient = getReplicateClient();
+  if (!replicateClient) {
+    console.log('Replicate API not configured, skipping style variations');
+    return [];
+  }
+
   const styles = [
     { name: 'realistic', prompt: 'photorealistic, high detail, professional portrait' },
     { name: 'anime', prompt: 'anime style, vibrant colors, detailed anime character' },
@@ -91,7 +113,7 @@ export async function generateStyleVariations(
 
   for (const style of styles.slice(0, 4)) {
     try {
-      const output = await replicate.run(
+      const output = await replicateClient.run(
         'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b' as any,
         {
           input: {
@@ -118,8 +140,13 @@ export async function generateStyleVariations(
 }
 
 export async function removeBackground(imageUrl: string): Promise<string> {
+  const replicateClient = getReplicateClient();
+  if (!replicateClient) {
+    throw new Error('Background removal requires Replicate API. Please configure REPLICATE_API_TOKEN.');
+  }
+
   try {
-    const output = await replicate.run(
+    const output = await replicateClient.run(
       'cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003' as any,
       {
         input: {
