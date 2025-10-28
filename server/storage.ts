@@ -41,13 +41,33 @@ export interface IStorage {
 // Initialize Firebase Admin SDK for server-side Firestore access
 function initializeFirebaseAdmin() {
   if (getApps().length === 0) {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    if (!privateKey || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.VITE_FIREBASE_PROJECT_ID) {
+      throw new Error('Missing required Firebase Admin credentials. Please configure FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and VITE_FIREBASE_PROJECT_ID.');
+    }
+    
+    // The private key from Replit Secrets has literal \n characters that need to be converted to actual newlines
+    // First, handle the case where it starts with \n (which is common in Firebase keys)
+    let formattedKey = privateKey.trim();
+    
+    // If the key doesn't start with proper PEM header, add it
+    if (!formattedKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+      // Replace all literal \n with actual newlines
+      formattedKey = formattedKey.split('\\n').join('\n');
+      
+      // If still doesn't have proper header, wrap it
+      if (!formattedKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+        formattedKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey.replace(/^[\n\s]+/, '')}\n-----END PRIVATE KEY-----\n`;
+      }
+    }
+    
     // Initialize with environment variables
     // Note: This uses the same Firebase project as the client, but with admin privileges
     initializeApp({
       credential: cert({
         projectId: process.env.VITE_FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        privateKey: formattedKey,
       })
     });
   }
