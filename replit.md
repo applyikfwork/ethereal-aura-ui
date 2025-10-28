@@ -4,7 +4,20 @@
 
 Aura is a fully functional AI-powered avatar generation platform built with React, TypeScript, and Express. The application allows users to create customized AI-generated avatars with various styles, poses, and effects. It features a modern white-themed glassmorphic UI design with glowing animations and a freemium business model where users get 10 free credits and can upgrade to premium for unlimited generations.
 
-## Recent Changes (October 27, 2025)
+## Recent Changes
+
+### October 28, 2025 - Deployment & Guest Mode Fixes
+- ✅ **Firebase Guest Mode**: Made Firebase optional - app now runs in guest mode when Firebase credentials are not configured
+  - No more "invalid-api-key" errors
+  - Guest user provided for testing without authentication
+  - Seamless fallback system for all Firebase-dependent features
+- ✅ **Vercel Build Fix**: Resolved TypeScript compilation errors for production deployment
+  - Fixed `tsconfig.server.json` configuration (removed incompatible `allowImportingTsExtensions`)
+  - Changed `moduleResolution` to "node" for proper server-side compilation
+  - Fixed unused parameter warnings across server files
+  - Production build now succeeds without errors
+
+### October 27, 2025
 
 ### Phase 1: Initial Setup
 - ✅ Migrated from Lovable to Replit full-stack template

@@ -230,7 +230,7 @@ export class FirestoreStorage implements IStorage {
     return true;
   }
 
-  async shareAvatar(avatarId: string, userId: string): Promise<boolean> {
+  async shareAvatar(avatarId: string, _userId: string): Promise<boolean> {
     const avatarRef = this.db.collection('avatars').doc(avatarId);
     const avatar = await avatarRef.get();
     if (!avatar.exists) return false;
@@ -520,7 +520,7 @@ export class MemStorage implements IStorage {
     return true;
   }
 
-  async shareAvatar(avatarId: string, userId: string): Promise<boolean> {
+  async shareAvatar(avatarId: string, _userId: string): Promise<boolean> {
     const avatar = this.avatars.get(avatarId);
     if (!avatar) return false;
     

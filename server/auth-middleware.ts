@@ -41,7 +41,7 @@ export async function authenticateUser(
 // Optional authentication - allows both authenticated and unauthenticated requests
 export async function optionalAuth(
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   try {
