@@ -35,6 +35,11 @@ Aura is a fully functional AI-powered avatar generation platform built with Reac
   - Uses demo user for testing and development
   - Better error handling with informative messages
   - Validation for photo uploads before generation
+- ✅ **Security Enforcement**: Server-side identity verification
+  - Backend verifies Firebase tokens and extracts verified user IDs
+  - Unauthenticated requests forced to demo account (prevents userId spoofing)
+  - No trust of client-provided userId - always uses server-verified identity
+  - Protects both avatar generation and image upload endpoints
 
 #### Developer Experience
 - ✅ **Improved Error Handling**: Enhanced user feedback system
