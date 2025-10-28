@@ -43,15 +43,22 @@ function CreatorPage() {
   // Generate avatar mutation
   const generateMutation = useMutation({
     mutationFn: async (request: AvatarRequest) => {
+      console.log("Generating avatar with request:", request);
+      toast({
+        title: "🎨 Starting Generation",
+        description: "Creating your avatar... This may take a moment.",
+      });
+      
       return await apiRequest("/api/avatars/generate", {
         method: "POST",
         body: { ...request, userId: userData?.uid || "demo" },
       });
     },
     onSuccess: (data) => {
+      console.log("Avatar generation successful:", data);
       setGeneratedAvatar(data.avatar);
       toast({
-        title: "✨ Avatar Created!",
+        title: "✨ Avatar Created Successfully!",
         description: `Credits remaining: ${data.creditsRemaining}`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/avatars"] });
@@ -63,14 +70,24 @@ function CreatorPage() {
       console.error("Avatar generation error:", error);
       let errorMessage = "Failed to generate avatar. Please try again.";
       
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.status === 403) {
-        errorMessage = "Not enough credits. Please upgrade to premium!";
-      } else if (error.status === 500) {
-        errorMessage = "Server error. Our AI is taking a break. Please try again in a moment.";
-      } else if (error.status === 404) {
-        errorMessage = "Generation service not found. Please contact support.";
+      // Try to parse error message from response
+      try {
+        const errorText = error.message || error.toString();
+        if (errorText.includes("403")) {
+          errorMessage = "Not enough credits. Please upgrade to premium!";
+        } else if (errorText.includes("404")) {
+          errorMessage = "User not found. Please try again.";
+        } else if (errorText.includes("500")) {
+          errorMessage = "Server error. Our AI is taking a break. Please try again in a moment.";
+        } else if (errorText.includes("error")) {
+          // Extract error message after the status code
+          const match = errorText.match(/\d{3}:\s*(.+)/);
+          if (match) {
+            errorMessage = match[1];
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing error message:", e);
       }
       
       toast({
@@ -162,6 +179,15 @@ function CreatorPage() {
                   </Select>
                 </FormField>
 
+                <FormField label="Ethnicity" testId="input-ethnicity">
+                  <Input 
+                    value={formData.ethnicity}
+                    onChange={(e) => setFormData({ ...formData, ethnicity: e.target.value })}
+                    placeholder="e.g., mixed, caucasian, asian, african"
+                    data-testid="input-ethnicity"
+                  />
+                </FormField>
+
                 <FormField label="Hair Style" testId="input-hair-style">
                   <Input 
                     value={formData.hairStyle}
@@ -178,6 +204,28 @@ function CreatorPage() {
                     placeholder="e.g., brown, blonde, black"
                     data-testid="input-hair-color"
                   />
+                </FormField>
+
+                <FormField label="Outfit" testId="input-outfit">
+                  <Input 
+                    value={formData.outfit}
+                    onChange={(e) => setFormData({ ...formData, outfit: e.target.value })}
+                    placeholder="e.g., casual modern, business suit, fantasy armor"
+                    data-testid="input-outfit"
+                  />
+                </FormField>
+
+                <FormField label="Pose" testId="select-pose">
+                  <Select value={formData.pose} onValueChange={(value) => setFormData({ ...formData, pose: value as any })}>
+                    <SelectTrigger data-testid="input-pose">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="front">Front View</SelectItem>
+                      <SelectItem value="three-quarter">Three-Quarter View</SelectItem>
+                      <SelectItem value="side">Side Profile</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormField>
 
                 <FormField label="Art Style" testId="select-art-style">
@@ -207,6 +255,19 @@ function CreatorPage() {
                   </Select>
                 </FormField>
 
+                <FormField label="Background" testId="select-background">
+                  <Select value={formData.background} onValueChange={(value) => setFormData({ ...formData, background: value as any })}>
+                    <SelectTrigger data-testid="input-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gradient">Gradient</SelectItem>
+                      <SelectItem value="transparent">Transparent</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
+
                 <FormField label="Size" testId="select-size">
                   <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value as any })}>
                     <SelectTrigger data-testid="input-size">
@@ -218,6 +279,18 @@ function CreatorPage() {
                       <SelectItem value="2048">2048px (Premium)</SelectItem>
                     </SelectContent>
                   </Select>
+                </FormField>
+
+                <FormField label="Custom Prompt (Optional)" testId="input-custom-prompt">
+                  <Input 
+                    value={formData.customPrompt || ''}
+                    onChange={(e) => setFormData({ ...formData, customPrompt: e.target.value })}
+                    placeholder="Describe your avatar in detail..."
+                    data-testid="input-custom-prompt"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Optional: Override all settings with a custom description
+                  </p>
                 </FormField>
               </div>
             </Card>
