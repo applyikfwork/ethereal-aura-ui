@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -12,6 +12,18 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
   const { user, userData, loading, isAdmin } = useAuth();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    if (!loading && (!user || !userData)) {
+      setLocation('/login');
+    }
+  }, [loading, user, userData, setLocation]);
+
+  useEffect(() => {
+    if (!loading && adminOnly && !isAdmin) {
+      setLocation('/');
+    }
+  }, [loading, adminOnly, isAdmin, setLocation]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -24,12 +36,10 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
   }
 
   if (!user || !userData) {
-    setLocation('/login');
     return null;
   }
 
   if (adminOnly && !isAdmin) {
-    setLocation('/');
     return null;
   }
 
