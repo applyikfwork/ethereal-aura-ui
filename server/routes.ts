@@ -3,8 +3,9 @@ import multer from "multer";
 import { IStorage } from "./storage";
 import { avatarRequestSchema } from "@shared/schema";
 import { generateAvatarWithGemini, enhancePromptWithGemini } from "./gemini";
-import { generateAvatarFromPhoto, generateStyleVariations, removeBackground, uploadImageToFirebase, resizeImage } from "./replicate-service";
+import { generateAvatarFromPhoto, generateStyleVariations, removeBackground, resizeImage } from "./replicate-service";
 import { authenticateUser, type AuthenticatedRequest } from "./auth-middleware";
+import { uploadToCloudinary } from "./cloudinary";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -52,7 +53,7 @@ export function registerRoutes(app: Express, storage: IStorage) {
       }
       const filename = `${Date.now()}-${req.file.originalname}`;
       
-      const imageUrl = await uploadImageToFirebase(req.file.buffer, userId, filename);
+      const imageUrl = await uploadToCloudinary(req.file.buffer, `avatars/${userId}`, filename);
       
       res.json({ imageUrl });
     } catch (error: any) {
