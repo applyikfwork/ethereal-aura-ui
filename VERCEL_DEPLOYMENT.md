@@ -84,14 +84,22 @@ After deployment:
 4. Test avatar generation
 5. Check the Vercel function logs for any errors
 
+## How It Works
+
+The deployment uses Vercel's serverless functions with a catch-all route:
+- `api/[...path].ts` - Handles ALL `/api/*` requests and routes them to the Express app
+- Frontend files are served from `dist/public`
+- SPA routing is handled by rewriting all non-API requests to `index.html`
+
 ## Common Issues
 
 ### 404 Errors on API Routes
 
 If you see 404 errors when calling `/api/*` endpoints:
-- Check that the `api/index.ts` file exists
-- Verify the `vercel.json` rewrites configuration
+- Check that the `api/[...path].ts` file exists (this is a catch-all route)
+- Verify the `vercel.json` configuration
 - Check Vercel function logs for errors
+- Ensure environment variables are set correctly
 
 ### Firebase Not Connecting
 
