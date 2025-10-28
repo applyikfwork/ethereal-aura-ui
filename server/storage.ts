@@ -337,6 +337,8 @@ export class FirestoreStorage implements IStorage {
   }
 
   async getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
+    // Note: This query requires a composite index in Firestore on the 'users' collection
+    // for the 'totalLikes' field (descending). If this index is not configured, the query will fail.
     const snapshot = await this.db
       .collection('users')
       .orderBy('totalLikes', 'desc')
