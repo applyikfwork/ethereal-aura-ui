@@ -162,40 +162,21 @@ export async function removeBackground(imageUrl: string): Promise<string> {
   }
 }
 
-export async function uploadImageToFirebase(
-  imageBuffer: Buffer,
+export async function uploadImageToCloudinary(
+  imageUrl: string,
   userId: string,
   filename: string
 ): Promise<string> {
   try {
-    const admin = await import('firebase-admin');
+    const { uploadToCloudinary } = await import('./cloudinary');
     
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-        storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-      });
-    }
-
-    const bucket = admin.storage().bucket();
-    const file = bucket.file(`avatars/${userId}/${filename}`);
+    const response = await fetch(imageUrl);
+    const buffer = Buffer.from(await response.arrayBuffer());
     
-    await file.save(imageBuffer, {
-      metadata: {
-        contentType: 'image/png',
-      },
-    });
-
-    await file.makePublic();
-    
-    return `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+    return await uploadToCloudinary(buffer, `generated-avatars/${userId}`, filename);
   } catch (error) {
-    console.error('Firebase upload error:', error);
-    throw new Error('Failed to upload image to storage');
+    console.error('Cloudinary upload error:', error);
+    throw new Error('Failed to upload generated avatar to storage');
   }
 }
 

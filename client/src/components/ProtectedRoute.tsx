@@ -9,14 +9,14 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
-  const { user, userData, loading, isAdmin } = useAuth();
+  const { user, userData, loading, isAdmin, isGuestMode } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && (!user || !userData)) {
+    if (!loading && !isGuestMode && !user) {
       setLocation('/login');
     }
-  }, [loading, user, userData, setLocation]);
+  }, [loading, user, isGuestMode, setLocation]);
 
   useEffect(() => {
     if (!loading && adminOnly && !isAdmin) {
@@ -35,7 +35,7 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
     );
   }
 
-  if (!user || !userData) {
+  if (!isGuestMode && !user) {
     return null;
   }
 
