@@ -1,7 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Replicate from 'replicate';
 import type { AvatarRequest } from '@shared/schema';
 
 let genAI: GoogleGenerativeAI | null = null;
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
 
 export async function initializeGemini(apiKey: string) {
   genAI = new GoogleGenerativeAI(apiKey);
@@ -10,7 +15,7 @@ export async function initializeGemini(apiKey: string) {
 export async function getGeminiApiKey(): Promise<string | null> {
   try {
     // Use Replit secret for secure API key management
-    return process.env.GEMINI_API_KEY || null;
+    return process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || null;
   } catch (error) {
     console.error('Failed to get Gemini API key:', error);
     return null;
@@ -64,17 +69,11 @@ export function generateAvatarPrompt(request: AvatarRequest): string {
 }
 
 /**
- * Generate avatar with Gemini-enhanced prompts
+ * Generate avatar with Gemini-enhanced prompts and Replicate AI
  * 
- * NOTE: Gemini is an LLM and doesn't generate images directly.
- * To enable real image generation, integrate one of these services:
- * 
- * 1. Google Imagen: https://cloud.google.com/vertex-ai/docs/generative-ai/image/overview
- * 2. OpenAI DALL-E: https://platform.openai.com/docs/guides/images
- * 3. Replicate (Stable Diffusion): https://replicate.com/stability-ai/stable-diffusion
- * 
- * Current implementation: Uses Gemini to enhance prompts, then returns a styled placeholder.
- * The enhanced prompt can be used with any image generation API.
+ * This function uses:
+ * 1. Gemini AI to enhance the text prompt (if API key available)
+ * 2. Replicate's SDXL model to generate the actual avatar image
  */
 export async function generateAvatarWithGemini(
   request: AvatarRequest
@@ -84,7 +83,11 @@ export async function generateAvatarWithGemini(
   let enhancedPrompt: string;
   
   // Try to enhance prompt with Gemini if API key is available
-  if (apiKey && genAI) {
+  if (apiKey) {
+    if (!genAI) {
+      initializeGemini(apiKey);
+    }
+    
     try {
       const basePrompt = generateAvatarPrompt(request);
       enhancedPrompt = await enhancePromptWithGemini(basePrompt);
@@ -94,29 +97,49 @@ export async function generateAvatarWithGemini(
       enhancedPrompt = generateAvatarPrompt(request);
     }
   } else {
+    console.log('Gemini API key not available, using base prompt');
     enhancedPrompt = generateAvatarPrompt(request);
   }
 
-  // TODO: Replace this with actual image generation API call
-  // Example with DALL-E:
-  // const response = await openai.images.generate({
-  //   model: "dall-e-3",
-  //   prompt: enhancedPrompt,
-  //   n: 1,
-  //   size: request.size === "2048" ? "1024x1024" : "512x512"
-  // });
-  // return { imageUrl: response.data[0].url, prompt: enhancedPrompt };
-  
-  // Placeholder: Return a styled DiceBear avatar
-  const style = request.artStyle === 'anime' ? 'big-smile' : 
-                request.artStyle === 'cartoon' ? 'bottts' : 'avataaars';
-  const seed = `${request.gender}-${request.age}-${Date.now()}-${Math.random()}`;
-  const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
-  
-  return {
-    imageUrl: avatarUrl,
-    prompt: enhancedPrompt,
-  };
+  // Generate image using Replicate SDXL
+  try {
+    console.log('Generating avatar with Replicate using prompt:', enhancedPrompt);
+    
+    const model = 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b';
+    
+    const output = await replicate.run(model as any, {
+      input: {
+        prompt: enhancedPrompt,
+        negative_prompt: 'low quality, blurry, distorted, disfigured, ugly, bad anatomy, multiple people, watermark, text',
+        num_outputs: 1,
+        guidance_scale: 7.5,
+        num_inference_steps: 30,
+        width: parseInt(request.size),
+        height: parseInt(request.size),
+      },
+    }) as string[];
+
+    const imageUrl = Array.isArray(output) ? output[0] : output;
+    
+    return {
+      imageUrl,
+      prompt: enhancedPrompt,
+    };
+  } catch (error) {
+    console.error('Replicate generation failed:', error);
+    
+    // Fallback to DiceBear if Replicate fails
+    const style = request.artStyle === 'anime' ? 'big-smile' : 
+                  request.artStyle === 'cartoon' ? 'bottts' : 'avataaars';
+    const seed = `${request.gender}-${request.age}-${Date.now()}-${Math.random()}`;
+    const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+    
+    console.warn('Using fallback DiceBear avatar due to Replicate error');
+    return {
+      imageUrl: avatarUrl,
+      prompt: enhancedPrompt,
+    };
+  }
 }
 
 // Alternative: Use Gemini to enhance prompts for image generation services
