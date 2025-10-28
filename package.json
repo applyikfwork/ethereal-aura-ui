@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --ignore \"**/*.timestamp-*.mjs\" server/index.ts",
-    "build": "vite build --outDir dist/public && tsc -p tsconfig.server.json",
+    "build": "vite build && tsc -p tsconfig.server.json",
+    "vercel-build": "vite build",
     "start": "NODE_ENV=production node dist/index.js",
     "lint": "eslint .",
     "preview": "vite preview"

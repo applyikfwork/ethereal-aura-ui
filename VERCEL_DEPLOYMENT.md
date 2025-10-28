@@ -88,8 +88,9 @@ After deployment:
 
 The deployment uses Vercel's serverless functions with a catch-all route:
 - `api/[...path].ts` - Handles ALL `/api/*` requests and routes them to the Express app
-- Frontend files are served from `dist/public`
+- Frontend files are served from `dist` directory
 - SPA routing is handled by rewriting all non-API requests to `index.html`
+- Vercel automatically runs `vercel-build` script from package.json
 
 ## Common Issues
 

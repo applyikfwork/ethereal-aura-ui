@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.local
+client
+server
+shared
+tsconfig.*.json
+tsx.config.json
+vite.config.ts
+FIREBASE_SETUP.md
+README.md
+replit.md
+.replit

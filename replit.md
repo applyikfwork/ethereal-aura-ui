@@ -16,6 +16,13 @@ Aura is a fully functional AI-powered avatar generation platform built with Reac
   - Changed `moduleResolution` to "node" for proper server-side compilation
   - Fixed unused parameter warnings across server files
   - Production build now succeeds without errors
+- ✅ **Vercel Deployment Configuration**: Complete setup for Vercel deployment
+  - Fixed React "invalid hook call" errors in ProtectedRoute component
+  - Created `api/[...path].ts` serverless function for Express backend
+  - Updated build output from `dist/public` to `dist` for Vercel compatibility
+  - Added `vercel-build` script for optimized Vercel builds
+  - Created comprehensive deployment guide in `VERCEL_DEPLOYMENT.md`
+  - Configured proper routing for SPA and API endpoints
 
 ### October 27, 2025
 
@@ -120,7 +127,8 @@ Preferred communication style: Simple, everyday language.
 **Production Build**
 - Separate builds for client (Vite) and server (TypeScript compiler)
 - Static file serving with Express for production deployment
-- Client built to `dist/public`, server to `dist`
+- Client built to `dist`, server compiled to `dist/server` and `dist/shared`
+- Vercel deployment uses `api/[...path].ts` as serverless function entry point
 
 ### Data Storage
 

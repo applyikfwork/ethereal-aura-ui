@@ -33,7 +33,7 @@ export async function setupVite(app: Express) {
 }
 
 export function serveStatic(app: Express) {
-  const clientPath = path.resolve(process.cwd(), "dist/public");
+  const clientPath = path.resolve(process.cwd(), "dist");
 
   app.use(express.static(clientPath));
 
