@@ -2,10 +2,14 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite } from "./vite";
 import { FirestoreStorage, MemStorage } from "./storage";
+import { configureCloudinary } from "./cloudinary";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Initialize Cloudinary
+configureCloudinary();
 
 // Use Firestore for persistent storage if Firebase credentials are available
 // Otherwise fall back to in-memory storage for development
