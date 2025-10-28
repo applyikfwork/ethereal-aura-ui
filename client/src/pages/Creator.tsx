@@ -20,7 +20,7 @@ function CreatorPage() {
   const [creationMode, setCreationMode] = useState<'custom' | 'photo'>('custom');
   const [uploadedImage, setUploadedImage] = useState<{file: File, url: string} | null>(null);
   const [formData, setFormData] = useState<Partial<AvatarRequest>>({
-    userId: userData?.uid || "demo",
+    userId: "demo",
     gender: "female",
     age: "young-adult",
     ethnicity: "mixed",
@@ -45,7 +45,7 @@ function CreatorPage() {
     mutationFn: async (request: AvatarRequest) => {
       return await apiRequest("/api/avatars/generate", {
         method: "POST",
-        body: { ...request, userId: userData?.uid },
+        body: { ...request, userId: userData?.uid || "demo" },
       });
     },
     onSuccess: (data) => {
@@ -55,18 +55,43 @@ function CreatorPage() {
         description: `Credits remaining: ${data.creditsRemaining}`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/avatars"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/avatars/user", userData?.uid] });
+      if (userData?.uid) {
+        queryClient.invalidateQueries({ queryKey: ["/api/avatars/user", userData.uid] });
+      }
     },
     onError: (error: any) => {
+      console.error("Avatar generation error:", error);
+      let errorMessage = "Failed to generate avatar. Please try again.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.status === 403) {
+        errorMessage = "Not enough credits. Please upgrade to premium!";
+      } else if (error.status === 500) {
+        errorMessage = "Server error. Our AI is taking a break. Please try again in a moment.";
+      } else if (error.status === 404) {
+        errorMessage = "Generation service not found. Please contact support.";
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate avatar",
+        title: "⚠️ Generation Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const handleGenerate = () => {
+    if (creationMode === 'photo' && !uploadedImage) {
+      toast({
+        title: "⚠️ No image uploaded",
+        description: "Please upload a photo to transform into an avatar",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setGeneratedAvatar(null); // Clear previous avatar
     generateMutation.mutate(formData as AvatarRequest);
   };
 
@@ -335,9 +360,5 @@ function FormField({ label, children, testId }: { label: string; children: React
 }
 
 export default function Creator() {
-  return (
-    <ProtectedRoute>
-      <CreatorPage />
-    </ProtectedRoute>
-  );
+  return <CreatorPage />;
 }
