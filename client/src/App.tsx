@@ -8,7 +8,7 @@ import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/config/firebase";
+import { db, isFirebaseConfigured } from "@/config/firebase";
 import type { AdminSettings } from "@shared/schema";
 import Home from "./pages/Home";
 import Creator from "./pages/Creator";
@@ -23,9 +23,13 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
-  // Load and apply favicon from admin settings
   useEffect(() => {
     const loadFavicon = async () => {
+      if (!isFirebaseConfigured || !db) {
+        document.title = 'Aura - AI Avatar Studio';
+        return;
+      }
+      
       try {
         const settingsRef = doc(db, 'settings', 'admin');
         const settingsSnap = await getDoc(settingsRef);
@@ -33,7 +37,6 @@ const App = () => {
         if (settingsSnap.exists()) {
           const settings = settingsSnap.data() as AdminSettings;
           
-          // Update favicon if configured
           if (settings.faviconUrl) {
             const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement || document.createElement('link');
             link.type = 'image/x-icon';
@@ -44,7 +47,6 @@ const App = () => {
             }
           }
           
-          // Update site title if configured
           if (settings.siteName) {
             document.title = settings.siteName;
           }
