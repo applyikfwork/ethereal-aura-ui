@@ -6,10 +6,9 @@ import { Loader2, Crown, Sparkles, Camera, Upload } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
-import { storage, db, auth } from "@/config/firebase";
+import { db, auth } from "@/config/firebase";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import type { Avatar, User } from "@shared/schema";
 
@@ -24,14 +23,28 @@ function ProfilePage() {
 
   const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !authUser || !userData) return;
+    if (!file || !authUser || !userData || !db) return;
 
     setUploading(true);
     try {
-      // Upload to Firebase Storage
-      const storageRef = ref(storage, `profile-pictures/${userData.uid}`);
-      await uploadBytes(storageRef, file);
-      const photoURL = await getDownloadURL(storageRef);
+      // Upload to Cloudinary via our API
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const token = await authUser.getIdToken();
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const { imageUrl: photoURL } = await response.json();
 
       // Update Firebase Auth profile
       await updateProfile(authUser, { photoURL });
