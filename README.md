@@ -1,73 +1,154 @@
-# Welcome to your Lovable project
+# ✨ Aura - AI Avatar Creator
 
-## Project info
+> **Your Digital Soul, Brought to Life.**
 
-**URL**: https://lovable.dev/projects/0ec2c687-9306-450c-98af-0f6cc556c73b
+A premium AI-powered avatar creation platform with stunning glassmorphic UI, powered by Google Gemini AI and Supabase.
 
-## How can I edit this code?
+![Aura Avatar Creator](https://img.shields.io/badge/Status-Functional-success) ![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20Gemini%20%7C%20Supabase-blue)
 
-There are several ways of editing your application.
+## 🌟 Features
 
-**Use Lovable**
+### 🎨 Avatar Studio
+- **Comprehensive Customization**: Gender, age, skin tone, hair style & color, outfits, backgrounds
+- **Multiple Art Styles**: Realistic, Anime, Fantasy, Cartoon, Cyberpunk
+- **Magical Aura Effects**: Subtle, Strong, Holographic glow effects
+- **AI-Powered Generation**: Creates 4 unique variations using Google Gemini 2.0
+- **High Resolution**: 512px, 1024px, 2048px (Premium)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0ec2c687-9306-450c-98af-0f6cc556c73b) and start prompting.
+### 👤 User Features
+- **Authentication**: Google OAuth via Supabase Auth
+- **Credit System**: 3 free avatars per day, unlimited with Premium
+- **Personal Gallery**: Save and manage your avatar collection
+- **Community Gallery**: Browse and discover public avatars
+- **Premium Membership**: Aura+ with unlimited generation
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Getting Started
 
-**Use your preferred IDE**
+The application is already running! Simply:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. **Sign In**: Click "Sign In" in the top-right and authenticate with Google
+2. **Create Avatar**: Navigate to "Studio" and customize your avatar settings
+3. **Generate**: Click "Generate Avatar" to create 4 unique variations
+4. **Download**: Save your favorite avatars
+5. **Explore**: Check out the Gallery to see what others have created
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🏗️ Tech Stack
 
-Follow these steps:
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Backend**: Express.js + Node.js
+- **AI**: Google Gemini 2.0 Flash (Image Generation)
+- **Auth & Database**: Supabase
+- **State Management**: TanStack Query
+- **Routing**: Wouter
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 📁 Project Structure
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+├── client/src/          # Frontend React application
+│   ├── components/      # Reusable UI components
+│   │   ├── ui/         # shadcn/ui component library
+│   │   ├── Hero.tsx    # Landing page hero section
+│   │   ├── Features.tsx
+│   │   ├── Showcase.tsx
+│   │   ├── CTA.tsx
+│   │   └── Navbar.tsx  # Navigation bar
+│   ├── pages/          # Application pages
+│   │   ├── Index.tsx   # Home/Landing page
+│   │   ├── Studio.tsx  # Avatar creation studio
+│   │   ├── Gallery.tsx # Public avatar gallery
+│   │   ├── Profile.tsx # User dashboard
+│   │   └── Premium.tsx # Premium membership page
+│   ├── contexts/       # React contexts
+│   │   └── AuthContext.tsx
+│   └── lib/            # Utilities
+│       ├── supabase.ts
+│       └── queryClient.ts
+├── server/             # Backend Express server
+│   ├── index.ts       # Server entry point
+│   ├── routes.ts      # API endpoints
+│   ├── gemini.ts      # Gemini AI integration
+│   ├── storage.ts     # Data persistence layer
+│   └── supabase.ts    # Supabase server client
+└── shared/            # Shared types
+    └── schema.ts      # Data schemas & validation
 ```
 
-**Edit a file directly in GitHub**
+## 🎨 Design System
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The app features a modern **white-glass aesthetic** with neon glow accents:
 
-**Use GitHub Codespaces**
+- **Colors**: Lavender (#B8A4D7), Sky Blue (#A0E8FF), Pink (#FFC6E7)
+- **Effects**: Glassmorphism, neumorphism, smooth animations
+- **Typography**: Light font weights with gradient text overlays
+- **Responsive**: Mobile-first design that works beautifully on all devices
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔧 API Endpoints
 
-## What technologies are used for this project?
+### User Management
+- `POST /api/users` - Create user
+- `GET /api/users/:id` - Get user by ID
+- `GET /api/users/email/:email` - Get user by email
+- `PATCH /api/users/:id/credits` - Update credits
+- `PATCH /api/users/:id/premium` - Update premium status
 
-This project is built with:
+### Avatar Operations
+- `POST /api/avatars/generate` - Generate 4 avatar variations
+- `GET /api/avatars/:id` - Get avatar by ID
+- `GET /api/users/:userId/avatars` - Get user's avatars
+- `GET /api/avatars/public/gallery` - Get public avatars
+- `PATCH /api/avatars/:id/public` - Toggle avatar visibility
+- `DELETE /api/avatars/:id` - Delete avatar
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## ⚙️ Environment Variables
 
-## How can I deploy this project?
+The following environment variables are configured in Replit Secrets:
 
-Simply open [Lovable](https://lovable.dev/projects/0ec2c687-9306-450c-98af-0f6cc556c73b) and click on Share -> Publish.
+```
+GEMINI_API_KEY          # Google AI Studio API key
+SUPABASE_URL            # Supabase project URL
+SUPABASE_ANON_KEY       # Supabase anonymous key
+SUPABASE_SERVICE_KEY    # Supabase service role key
+```
 
-## Can I connect a custom domain to my Lovable project?
+## 💎 Premium (Aura+) - $20/month
 
-Yes, you can!
+- ♾️ **Unlimited** avatar generation
+- 🖼️ **2048px** ultra high-resolution
+- ✨ **Exclusive** stylized glow effects
+- ⚡ **2x faster** generation speed
+- 🚫 **No watermarks** on downloads
+- 🎯 **Early access** to new features
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📝 Current Status
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### ✅ Fully Functional
+- Complete UI/UX for all pages
+- Gemini AI avatar generation working
+- Google OAuth authentication
+- Credit tracking system
+- All API endpoints operational
+- Responsive design with animations
+
+### ⚠️ Notes for Production
+The app currently uses **in-memory storage** for demonstration purposes. For production deployment:
+
+1. **Add Database Persistence**: Migrate from in-memory to Supabase PostgreSQL
+2. **Add Image Storage**: Store generated avatars in Supabase Storage or CDN
+3. **Add Payment Integration**: Implement Stripe for Premium subscriptions
+4. **Add Email Auth**: Extend beyond Google OAuth for broader access
+
+See `replit.md` for detailed migration instructions.
+
+## 🚢 Deployment
+
+Ready to deploy? Click the **"Publish"** button in Replit to deploy your app to production with a live URL!
+
+## 📚 Documentation
+
+- Full project documentation: See `replit.md`
+- API reference: Check `/server/routes.ts`
+- Component library: Browse `/client/src/components`
+
+---
+
+**Built with ✨ on Replit using Google Gemini AI and Supabase**
