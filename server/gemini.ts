@@ -6,8 +6,22 @@ import type { AvatarGenerationParams } from "../shared/schema";
 // - Note that the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
 //   - do not change this unless explicitly requested by the user
 
-// This API key is from Gemini Developer API Key, not vertex AI API Key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Lazy-load the AI client to ensure environment variables are ready
+let ai: GoogleGenAI | null = null;
+
+function getAIClient(): GoogleGenAI {
+  if (!ai) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is not set in environment variables");
+      console.error("Available env vars:", Object.keys(process.env).filter(k => k.includes('GEMINI')));
+      throw new Error("GEMINI_API_KEY is required for avatar generation. Please set it in Replit Secrets.");
+    }
+    // This API key is from Gemini Developer API Key, not vertex AI API Key
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 function buildAvatarPrompt(params: AvatarGenerationParams): string {
   const {
@@ -55,8 +69,10 @@ export async function generateAvatar(
 
     console.log("Generating avatar with prompt:", prompt);
 
+    const client = getAIClient();
+
     // Use Gemini's image generation model
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.0-flash-preview-image-generation",
       contents: [
         { 
