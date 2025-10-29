@@ -28,18 +28,22 @@ export const avatars = pgTable("avatars", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
+const baseInsertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
-}).extend({
+});
+
+const baseInsertAvatarSchema = createInsertSchema(avatars).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserSchema = baseInsertUserSchema.extend({
   name: z.string().min(1),
   email: z.string().email(),
 });
 
-export const insertAvatarSchema = createInsertSchema(avatars).omit({
-  id: true,
-  createdAt: true,
-}).extend({
+export const insertAvatarSchema = baseInsertAvatarSchema.extend({
   prompt: z.string().min(1),
   imageUrl: z.string().url(),
 });

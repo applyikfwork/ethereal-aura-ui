@@ -48,21 +48,25 @@ const Hero = () => {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
-            A premium AI studio where clean design meets futuristic technology.
+            Your Digital Soul, Brought to Life.
             <span className="block mt-2">
-              Calm, bright, and emotionally immersive.
+              Create stunning AI avatars with magical aura effects.
             </span>
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Button variant="hero" size="lg" className="group">
-              Get Started
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button variant="glass" size="lg">
-              Explore Features
-            </Button>
+            <a href="/studio">
+              <Button variant="hero" size="lg" className="group" data-testid="button-create-aura">
+                Create My Aura
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </a>
+            <a href="/gallery">
+              <Button variant="glass" size="lg" data-testid="button-explore">
+                Explore Gallery
+              </Button>
+            </a>
           </div>
 
           {/* Stats */}
