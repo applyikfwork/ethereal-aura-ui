@@ -32,23 +32,11 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   isAdmin: boolean;
-  isGuestMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
-
-const GUEST_USER_DATA: UserData = {
-  uid: 'guest-user',
-  email: 'guest@aura.demo',
-  displayName: 'Guest User',
-  photoURL: null,
-  role: 'user',
-  credits: 10,
-  isPremium: false,
-  createdAt: new Date().toISOString(),
-};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -82,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
-      setUserData(GUEST_USER_DATA);
+      console.error('Firebase is not configured. Please set up Firebase environment variables.');
       setLoading(false);
       return;
     }
@@ -105,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, displayName: string) => {
     if (!auth) {
-      throw new Error('Authentication is not available in guest mode. Please configure Firebase.');
+      throw new Error('Authentication is not available. Please contact support.');
     }
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName });
@@ -114,14 +102,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     if (!auth) {
-      throw new Error('Authentication is not available in guest mode. Please configure Firebase.');
+      throw new Error('Authentication is not available. Please contact support.');
     }
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signInWithGoogle = async () => {
     if (!auth) {
-      throw new Error('Authentication is not available in guest mode. Please configure Firebase.');
+      throw new Error('Authentication is not available. Please contact support.');
     }
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
@@ -136,7 +124,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isAdmin = userData?.role === 'admin';
-  const isGuestMode = !isFirebaseConfigured;
 
   return (
     <AuthContext.Provider value={{ 
@@ -147,8 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signIn, 
       signInWithGoogle,
       logout,
-      isAdmin,
-      isGuestMode
+      isAdmin
     }}>
       {children}
     </AuthContext.Provider>

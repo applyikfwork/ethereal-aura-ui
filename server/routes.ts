@@ -27,30 +27,14 @@ export function registerRoutes(app: Express, storage: IStorage) {
     res.json(user);
   });
 
-  // Upload image for avatar generation (OPTIONAL AUTH - allows guest mode with demo user only)
-  app.post("/api/upload-image", upload.single('image'), async (req: any, res) => {
+  // Upload image for avatar generation (SECURED - requires authentication)
+  app.post("/api/upload-image", authenticateUser, upload.single('image'), async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image file provided" });
       }
 
-      // Check if user is authenticated
-      const authHeader = req.headers.authorization;
-      let userId: string;
-      
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.split('Bearer ')[1];
-          const decodedToken = await (await import('firebase-admin')).auth().verifyIdToken(token);
-          userId = decodedToken.uid; // Use authenticated user ID
-        } catch (error) {
-          // Invalid token, treat as guest
-          userId = "demo";
-        }
-      } else {
-        // No auth header, force guest mode with demo user
-        userId = "demo";
-      }
+      const userId = req.user!.uid;
       const filename = `${Date.now()}-${req.file.originalname}`;
       
       const imageUrl = await uploadToCloudinary(req.file.buffer, `avatars/${userId}`, filename);
@@ -62,28 +46,11 @@ export function registerRoutes(app: Express, storage: IStorage) {
     }
   });
 
-  // Generate avatar (OPTIONAL AUTH - allows guest mode with demo user only)
-  app.post("/api/avatars/generate", async (req: any, res) => {
+  // Generate avatar (SECURED - requires authentication)
+  app.post("/api/avatars/generate", authenticateUser, async (req: AuthenticatedRequest, res) => {
     try {
       const request = avatarRequestSchema.parse(req.body);
-      
-      // Check if user is authenticated
-      const authHeader = req.headers.authorization;
-      let userId: string;
-      
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.split('Bearer ')[1];
-          const decodedToken = await (await import('firebase-admin')).auth().verifyIdToken(token);
-          userId = decodedToken.uid; // Use authenticated user ID
-        } catch (error) {
-          // Invalid token, treat as guest
-          userId = "demo";
-        }
-      } else {
-        // No auth header, force guest mode with demo user
-        userId = "demo";
-      }
+      const userId = req.user!.uid;
 
       // Check user credits
       const user = await storage.getUser(userId);

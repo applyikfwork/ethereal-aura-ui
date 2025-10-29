@@ -20,7 +20,6 @@ function CreatorPage() {
   const [creationMode, setCreationMode] = useState<'custom' | 'photo'>('custom');
   const [uploadedImage, setUploadedImage] = useState<{file: File, url: string} | null>(null);
   const [formData, setFormData] = useState<Partial<AvatarRequest>>({
-    userId: "demo",
     gender: "female",
     age: "young-adult",
     ethnicity: "mixed",
@@ -433,5 +432,9 @@ function FormField({ label, children, testId }: { label: string; children: React
 }
 
 export default function Creator() {
-  return <CreatorPage />;
+  return (
+    <ProtectedRoute>
+      <CreatorPage />
+    </ProtectedRoute>
+  );
 }
