@@ -19,19 +19,26 @@ Preferred communication style: Simple, everyday language.
 - **Production Build**: Separate builds for client (Vite) and server (TypeScript), deployed via Vercel using serverless functions.
 
 ### Data Storage
-- **Current Implementation**: In-memory storage (`MemStorage`) for development, with a default demo user. Data resets on server restart.
+- **Current Implementation**: In-memory storage (`MemStorage`) for development. Data resets on server restart.
 - **Storage Interface Design**: Abstract `IStorage` interface designed for future integration with persistent databases like PostgreSQL/Drizzle ORM.
 - **Data Models**: Comprehensive models for User, Avatar, Comment, Referral, AvatarRequest (detailing customization options), and PlatformStats.
 
 ### Authentication & Authorization
-- **Implementation**: Firebase Authentication (Email/Password, Google Sign-In) with server-side ID token verification using Firebase Admin SDK.
-- **Security**: Authentication middleware protects all user-scoped endpoints, ensuring user identity verification and preventing cross-user access or identity spoofing.
+- **Implementation**: Firebase Authentication (Email/Password, Google Sign-In) with server-side ID token verification using Firebase Admin SDK. **Firebase configuration is required** - the app will not function without valid Firebase credentials.
+- **Security**: All protected routes and API endpoints require authentication. Authentication middleware protects all user-scoped endpoints, ensuring user identity verification and preventing cross-user access or identity spoofing. Guest mode has been removed - all users must sign up/login to use protected features.
+- **Protected Features**: Avatar creation, profile management, likes/comments, and all user-specific functionality require authentication.
 - **Credit System**: Freemium model with 10 free credits (limited resolution) and unlimited premium credits (HD resolution). Credits are deducted per avatar generation.
 
 ### AI Integration
 - **Core AI**: Replicate API for AI avatar generation, utilizing SDXL for high-quality photo transformations and style variations, and rembg for background removal. DiceBear API serves as a fallback for custom (non-photo) avatars.
 - **AI Features**: Photo-to-avatar transformation, multiple art styles, automatic prompt enhancement via Google Gemini AI, background removal/replacement, multi-format exports, and batch variation generation.
-- **Avatar Generation Flow**: User input -> Frontend validation -> Backend credit check -> Prompt generation -> AI service call -> Avatar storage -> Credit deduction -> Avatar return to client.
+- **Avatar Generation Flow**: User authentication -> User input -> Frontend validation -> Backend credit check -> Prompt generation -> AI service call -> Avatar storage -> Credit deduction -> Avatar return to client.
+
+## Recent Changes (October 29, 2025)
+- **Removed Guest Mode**: Eliminated the guest mode system that previously allowed unauthenticated users to access the platform
+- **Enforced Authentication**: All protected routes (Creator, Profile, Admin) now require valid Firebase authentication
+- **Fixed "User Not Found" Errors**: Server routes no longer fall back to a "demo" user - all avatar generation and upload endpoints require authenticated users
+- **Security Improvements**: Removed optional authentication from critical endpoints to prevent authorization bypass
 
 ## External Dependencies
 
