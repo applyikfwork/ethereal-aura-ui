@@ -1,7 +1,7 @@
 import { Express } from "express";
 import { IStorage } from "./storage";
 import { avatarGenerationSchema, insertAvatarSchema, insertUserSchema, Avatar } from "../shared/schema";
-import { generateMultipleAvatars } from "./gemini";
+import { generateMultipleAvatars } from "./stability";
 
 export function registerRoutes(app: Express, storage: IStorage) {
   

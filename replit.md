@@ -4,7 +4,7 @@
 
 ## Overview
 
-Aura is a premium AI avatar creation platform powered by Google's Gemini AI and Supabase. Users can create stunning, personalized AI avatars with magical aura effects through an intuitive, beautifully designed interface.
+Aura is a premium AI avatar creation platform powered by Stability AI and Supabase. Users can create stunning, personalized AI avatars with magical aura effects through an intuitive, beautifully designed interface.
 
 ### Key Features
 
@@ -22,7 +22,7 @@ Aura is a premium AI avatar creation platform powered by Google's Gemini AI and 
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Express.js + Node.js
-- **AI**: Google Imagen 4.0 (Image Generation)
+- **AI**: Stability AI (Stable Diffusion Image Generation)
 - **Auth & Database**: Supabase
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **State Management**: TanStack Query (React Query)
@@ -57,7 +57,7 @@ Aura is a premium AI avatar creation platform powered by Google's Gemini AI and 
 │   ├── index.ts          # Server entry point
 │   ├── routes.ts         # API route handlers
 │   ├── storage.ts        # In-memory storage implementation
-│   ├── gemini.ts         # Gemini AI integration
+│   ├── stability.ts      # Stability AI integration
 │   └── supabase.ts       # Supabase server client
 └── shared/               # Shared types and schemas
     └── schema.ts         # Drizzle ORM schemas & Zod validation
@@ -128,7 +128,7 @@ Aura is a premium AI avatar creation platform powered by Google's Gemini AI and 
 Required environment variables (stored in Replit Secrets):
 
 ```
-GEMINI_API_KEY           # Google AI Studio API key
+STABILITY_API_KEY        # Stability AI API key (from platform.stability.ai)
 SUPABASE_URL             # Supabase project URL
 SUPABASE_ANON_KEY        # Supabase anonymous key
 SUPABASE_SERVICE_KEY     # Supabase service role key
@@ -190,8 +190,8 @@ This starts both the Express backend (port 5000) and Vite frontend server.
 
 ### Key Libraries
 
-- `@google/genai` - Gemini AI SDK
 - `@supabase/supabase-js` - Supabase client
+- Native `fetch` API - Stability AI REST API integration
 - `@tanstack/react-query` - Data fetching and caching
 - `wouter` - Lightweight routing
 - `zod` - Schema validation
@@ -208,19 +208,32 @@ This starts both the Express backend (port 5000) and Vite frontend server.
 
 ## Recent Changes (October 29, 2025)
 
-### Latest Update - Avatar Generation Fix (October 29, 2025)
+### Latest Update - Switched to Stability AI (October 29, 2025)
+- ✅ **Migrated to Stability AI**: Replaced Gemini/Imagen with Stability AI for avatar generation
+  - **Change**: Switched from Google's Gemini AI to Stability AI's Stable Diffusion
+  - **Reason**: User requested to use Stability AI instead of Gemini
+  - **Implementation**: 
+    - Created new `server/stability.ts` module using Stability AI REST API v2beta
+    - Uses `stable-image/generate/core` endpoint for high-quality image generation
+    - Supports style presets: photographic, anime, fantasy-art, comic-book, neon-punk
+    - Direct REST API integration (no SDK needed) using native fetch
+    - Parallel generation of 4 avatars per request
+  - **API Configuration**: 
+    - Endpoint: `https://api.stability.ai/v2beta/stable-image/generate/core`
+    - Output format: PNG, Base64 encoded
+    - Aspect ratio: 1:1 (square avatars)
+  - **Error Handling**: 
+    - Clear error messages for invalid API keys (401)
+    - Credit balance warnings (402)
+    - Network error detection
+  - Updated `server/routes.ts` to import from `stability.ts` instead of `gemini.ts`
+  - Removed dependency on `@google/genai` package
+
+### Previous Update - Avatar Generation Fix (October 29, 2025)
 - ✅ **Fixed Avatar Generation**: Upgraded from deprecated Gemini model to Imagen 4.0
-  - **Issue**: Avatar generation was failing with 500 internal server error
-  - **Root Cause**: Using deprecated `gemini-2.0-flash-preview-image-generation` model
-  - **Solution**: Migrated to production-ready `imagen-4.0-generate-001` model
-  - **Benefits**: 
-    - More reliable and stable image generation
-    - Batch generation support (generates 4 avatars in one API call instead of 4 separate calls)
-    - Better image quality and consistency
-    - Production-ready model with long-term support
-  - Updated `server/gemini.ts` to use `generateImages` API instead of `generateContent`
-  - Added better error handling with specific error messages for quota and API key issues
-  - Fixed TypeScript errors in schema validation for base64 image URLs
+  - Fixed 500 internal server error in avatar generation
+  - Migrated to production-ready `imagen-4.0-generate-001` model
+  - Added batch generation support and better error handling
 
 ### Previous Update - Email Authentication (October 29, 2025)
 - ✅ **Email/Password Authentication**: Added complete email authentication system
