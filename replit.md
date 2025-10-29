@@ -11,7 +11,7 @@ Aura is a premium AI avatar creation platform powered by Google's Gemini AI and 
 - **AI-Powered Avatar Generation**: Create custom avatars using advanced AI with customizable features
 - **Multiple Art Styles**: Realistic, Anime, Fantasy, Cartoon, and Cyberpunk styles
 - **Aura Effects**: Unique glowing aura effects (Subtle, Strong, Holographic)
-- **User Authentication**: Powered by Supabase Auth with Google OAuth support
+- **User Authentication**: Powered by Supabase Auth with email/password and Google OAuth support
 - **Credit System**: Free tier with 3 avatars/day, Premium tier with unlimited generation
 - **Community Gallery**: Browse and share public avatars
 - **Personal Profile**: Save and manage your avatar collection
@@ -39,7 +39,8 @@ Aura is a premium AI avatar creation platform powered by Google's Gemini AI and 
 │   │   │   ├── Features.tsx
 │   │   │   ├── Showcase.tsx
 │   │   │   ├── CTA.tsx
-│   │   │   └── Navbar.tsx
+│   │   │   ├── Navbar.tsx
+│   │   │   └── AuthDialog.tsx  # Email/password authentication dialog
 │   │   ├── contexts/      # React context providers
 │   │   │   └── AuthContext.tsx
 │   │   ├── lib/           # Utility libraries
@@ -174,7 +175,6 @@ VITE_SUPABASE_ANON_KEY   # Supabase anon key for frontend
 - Image storage in Supabase Storage
 - Like/Share functionality implementation
 - Actual watermark addition for free tier
-- Email/password authentication (currently Google OAuth only)
 
 ## Development
 
@@ -208,7 +208,18 @@ This starts both the Express backend (port 5000) and Vite frontend server.
 
 ## Recent Changes (October 29, 2025)
 
-### Latest Update
+### Latest Update - Email Authentication (October 29, 2025)
+- ✅ **Email/Password Authentication**: Added complete email authentication system
+  - Created `AuthDialog` component with login and signup forms
+  - Implemented using react-hook-form with zodResolver for validation
+  - Added `loginSchema` and `signupSchema` to shared/schema.ts
+  - Both Google OAuth and email/password options available in one dialog
+  - Proper error handling and loading states
+  - Follows fullstack_js form architecture guidelines
+- ✅ **Updated Navbar**: Sign In button now opens authentication dialog instead of direct Google OAuth
+- ✅ **Form Validation**: Client-side validation with zod schemas including password confirmation
+
+### Previous Updates
 - ✅ **Environment Setup Complete**: All API keys and secrets configured in Replit Secrets
 - ✅ **Database Ready**: Created comprehensive SQL setup (`supabase_setup.sql`) for production
 - ✅ **Fixed Authentication**: Updated Supabase configuration to handle missing credentials gracefully
