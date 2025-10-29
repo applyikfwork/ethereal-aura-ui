@@ -28,24 +28,26 @@ export const avatars = pgTable("avatars", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-const baseInsertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
-
-const baseInsertAvatarSchema = createInsertSchema(avatars).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertUserSchema = baseInsertUserSchema.extend({
+export const insertUserSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
+  avatarUrl: z.string().nullable().optional(),
+  credits: z.number().optional(),
+  premium: z.boolean().optional(),
 });
 
-export const insertAvatarSchema = baseInsertAvatarSchema.extend({
+export const insertAvatarSchema = z.object({
+  userId: z.string(),
   prompt: z.string().min(1),
   imageUrl: z.string().url(),
+  stylizedUrl: z.string().nullable().optional(),
+  public: z.boolean().optional(),
+  gender: z.string().nullable().optional(),
+  hairStyle: z.string().nullable().optional(),
+  hairColor: z.string().nullable().optional(),
+  artStyle: z.string().nullable().optional(),
+  auraEffect: z.string().nullable().optional(),
+  resolution: z.string().nullable().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

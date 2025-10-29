@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sparkles, Download, Crown } from "lucide-react";
-import { Navigate } from "wouter";
+import { Redirect } from "wouter";
 import type { Avatar as AvatarType } from "@shared/schema";
 
 export default function Profile() {
@@ -16,7 +16,7 @@ export default function Profile() {
   });
 
   if (!user) {
-    return <Navigate to="/" />;
+    return <Redirect to="/" />;
   }
 
   return (

@@ -27,7 +27,8 @@ export class MemStorage implements IStorage {
     const id = crypto.randomUUID();
     const newUser: User = {
       id,
-      ...user,
+      name: user.name,
+      email: user.email,
       credits: user.credits ?? 3,
       premium: user.premium ?? false,
       avatarUrl: user.avatarUrl ?? null,
@@ -70,7 +71,9 @@ export class MemStorage implements IStorage {
     const id = crypto.randomUUID();
     const newAvatar: Avatar = {
       id,
-      ...avatar,
+      userId: avatar.userId,
+      prompt: avatar.prompt,
+      imageUrl: avatar.imageUrl,
       public: avatar.public ?? false,
       stylizedUrl: avatar.stylizedUrl ?? null,
       gender: avatar.gender ?? null,
