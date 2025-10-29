@@ -20,11 +20,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser((session?.user as AuthUser) ?? null);
       if (session?.user?.email) {
         fetchAppUser(session.user.email);
       }
+      setLoading(false);
+    }).catch((error) => {
+      console.error('Auth error:', error);
       setLoading(false);
     });
 
@@ -49,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setAppUser(data);
-      } else {
+      } else if (supabase) {
         const supaUser = await supabase.auth.getUser();
         const newUser = await fetch('/api/users', {
           method: 'POST',
@@ -71,6 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    if (!supabase) {
+      alert('Authentication is not configured. Please set up Supabase credentials.');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -80,11 +92,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Authentication is not configured');
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signUpWithEmail = async (email: string, password: string, name: string) => {
+    if (!supabase) {
+      throw new Error('Authentication is not configured');
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -98,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   };
 
