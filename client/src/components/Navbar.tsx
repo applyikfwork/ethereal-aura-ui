@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,10 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, User, LogOut, Crown, Image as ImageIcon, Home } from "lucide-react";
+import AuthDialog from "@/components/AuthDialog";
 
 export default function Navbar() {
   const [location] = useLocation();
-  const { user, appUser, signOut, signInWithGoogle } = useAuth();
+  const { user, appUser, signOut } = useAuth();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   const navigation = [
     { name: "Home", href: "/", icon: Home },
@@ -94,7 +97,7 @@ export default function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={signInWithGoogle} variant="hero" size="sm" data-testid="button-signin">
+              <Button onClick={() => setAuthDialogOpen(true)} variant="hero" size="sm" data-testid="button-signin">
                 <User className="w-4 h-4" />
                 Sign In
               </Button>
@@ -102,6 +105,7 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </nav>
   );
 }
