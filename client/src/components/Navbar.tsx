@@ -27,14 +27,14 @@ export default function Navbar() {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link href="/">
-            <a className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
+            <div className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-home">
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-lavender to-sky flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-semibold bg-gradient-to-r from-lavender via-primary to-sky-bright bg-clip-text text-transparent">
                 Aura
               </span>
-            </a>
+            </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
@@ -43,17 +43,15 @@ export default function Navbar() {
               const isActive = location === item.href;
               return (
                 <Link key={item.name} href={item.href}>
-                  <a>
-                    <Button
-                      variant={isActive ? "default" : "ghost"}
-                      size="sm"
-                      className="gap-2"
-                      data-testid={`link-${item.name.toLowerCase()}`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.name}
-                    </Button>
-                  </a>
+                  <Button
+                    variant={isActive ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-2"
+                    data-testid={`link-${item.name.toLowerCase()}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </Button>
                 </Link>
               );
             })}
@@ -75,21 +73,17 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <Link href="/profile">
-                    <a>
-                      <DropdownMenuItem data-testid="link-profile">
-                        <User className="w-4 h-4 mr-2" />
-                        Profile
-                      </DropdownMenuItem>
-                    </a>
+                    <DropdownMenuItem data-testid="link-profile">
+                      <User className="w-4 h-4 mr-2" />
+                      Profile
+                    </DropdownMenuItem>
                   </Link>
                   {!appUser.premium && (
                     <Link href="/premium">
-                      <a>
-                        <DropdownMenuItem data-testid="link-upgrade">
-                          <Crown className="w-4 h-4 mr-2" />
-                          Upgrade to Premium
-                        </DropdownMenuItem>
-                      </a>
+                      <DropdownMenuItem data-testid="link-upgrade">
+                        <Crown className="w-4 h-4 mr-2" />
+                        Upgrade to Premium
+                      </DropdownMenuItem>
                     </Link>
                   )}
                   <DropdownMenuSeparator />
