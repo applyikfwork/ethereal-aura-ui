@@ -1,4 +1,4 @@
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import type { AvatarGenerationParams } from "../shared/schema";
 
 // DON'T DELETE THIS COMMENT
@@ -37,27 +37,25 @@ function buildAvatarPrompt(params: AvatarGenerationParams): string {
     auraEffect,
   } = params;
 
-  let prompt = `Create a high-resolution avatar portrait of a ${age} ${gender}, ${skinTone} skin tone, `;
-  prompt += `${hairStyle} ${hairColor} hair, wearing ${outfit} clothing, `;
-  prompt += `${pose} view, ${artStyle} art style`;
+  let prompt = `Create a high-quality ${artStyle} digital portrait of a ${age} ${gender} with ${skinTone} skin tone. `;
+  prompt += `Hair: ${hairStyle} style, ${hairColor} color. `;
+  prompt += `Outfit: ${outfit}. `;
+  prompt += `Pose: ${pose} view. `;
 
   if (background !== "transparent") {
-    prompt += `, ${background} background`;
+    prompt += `Background: ${background}. `;
   } else {
-    prompt += `, clean white background`;
+    prompt += `Background: clean white background. `;
   }
 
   if (auraEffect !== "none") {
-    prompt += `, with ${auraEffect} glowing aura effect around the character`;
+    prompt += `Add a ${auraEffect} glowing aura effect around the character. `;
   }
 
-  prompt += `, professional digital art, ultra detailed, high quality, centered composition, soft lighting`;
+  prompt += `Style: professional digital art, ultra detailed, high quality, centered composition, soft studio lighting, sharp focus. `;
+  prompt += `Avoid: multiple faces, multiple people, text, watermarks, blurry, distorted, low quality, bad anatomy, extra limbs, disfigured.`;
 
   return prompt;
-}
-
-function buildNegativePrompt(): string {
-  return "blurry, distorted, ugly, multiple faces, multiple people, text, watermark, nsfw, deformed, low quality, bad anatomy, extra limbs, disfigured, poor composition";
 }
 
 export async function generateAvatar(
@@ -65,49 +63,43 @@ export async function generateAvatar(
 ): Promise<string> {
   try {
     const prompt = buildAvatarPrompt(params);
-    const negativePrompt = buildNegativePrompt();
 
     console.log("Generating avatar with prompt:", prompt);
 
     const client = getAIClient();
 
-    // Use Gemini's image generation model
-    const response = await client.models.generateContent({
-      model: "gemini-2.0-flash-preview-image-generation",
-      contents: [
-        { 
-          role: "user", 
-          parts: [{ 
-            text: `${prompt}\n\nNegative prompt: ${negativePrompt}` 
-          }] 
-        }
-      ],
+    // Use Imagen 4.0 for high-quality image generation
+    const response = await client.models.generateImages({
+      model: "imagen-4.0-generate-001",
+      prompt: prompt,
       config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
+        numberOfImages: 1,
+        aspectRatio: "1:1",
       },
     });
 
-    const candidates = response.candidates;
-    if (!candidates || candidates.length === 0) {
+    if (!response.generatedImages || response.generatedImages.length === 0) {
       throw new Error("No image generated");
     }
 
-    const content = candidates[0].content;
-    if (!content || !content.parts) {
-      throw new Error("No content in response");
+    const generatedImage = response.generatedImages[0];
+    if (!generatedImage.image || !generatedImage.image.imageBytes) {
+      throw new Error("No image data in response");
     }
 
-    for (const part of content.parts) {
-      if (part.inlineData && part.inlineData.data) {
-        const imageData = part.inlineData.data;
-        return `data:image/png;base64,${imageData}`;
-      }
-    }
-
-    throw new Error("No image data in response");
-  } catch (error) {
+    const imageData = generatedImage.image.imageBytes;
+    return `data:image/png;base64,${imageData}`;
+  } catch (error: any) {
     console.error("Failed to generate avatar:", error);
-    throw new Error(`Failed to generate avatar: ${error}`);
+    
+    // Provide more detailed error information
+    if (error.message && error.message.includes("quota")) {
+      throw new Error("API quota exceeded. Please try again later or check your Gemini API quota.");
+    } else if (error.message && error.message.includes("API key")) {
+      throw new Error("Invalid API key. Please check your GEMINI_API_KEY in Replit Secrets.");
+    } else {
+      throw new Error(`Failed to generate avatar: ${error.message || error}`);
+    }
   }
 }
 
@@ -115,6 +107,51 @@ export async function generateMultipleAvatars(
   params: AvatarGenerationParams,
   count: number = 4
 ): Promise<string[]> {
-  const promises = Array(count).fill(null).map(() => generateAvatar(params));
-  return Promise.all(promises);
+  try {
+    const prompt = buildAvatarPrompt(params);
+
+    console.log(`Generating ${count} avatars with prompt:`, prompt);
+
+    const client = getAIClient();
+
+    // Use Imagen 4.0 batch generation (more efficient than multiple calls)
+    const response = await client.models.generateImages({
+      model: "imagen-4.0-generate-001",
+      prompt: prompt,
+      config: {
+        numberOfImages: count,
+        aspectRatio: "1:1",
+      },
+    });
+
+    if (!response.generatedImages || response.generatedImages.length === 0) {
+      throw new Error("No images generated");
+    }
+
+    const imageDataUrls: string[] = [];
+    for (const generatedImage of response.generatedImages) {
+      if (generatedImage.image && generatedImage.image.imageBytes) {
+        const imageData = generatedImage.image.imageBytes;
+        imageDataUrls.push(`data:image/png;base64,${imageData}`);
+      }
+    }
+
+    if (imageDataUrls.length === 0) {
+      throw new Error("No valid image data in response");
+    }
+
+    console.log(`Successfully generated ${imageDataUrls.length} avatars`);
+    return imageDataUrls;
+  } catch (error: any) {
+    console.error("Failed to generate multiple avatars:", error);
+    
+    // Provide more detailed error information
+    if (error.message && error.message.includes("quota")) {
+      throw new Error("API quota exceeded. Please try again later or check your Gemini API quota.");
+    } else if (error.message && error.message.includes("API key")) {
+      throw new Error("Invalid API key. Please check your GEMINI_API_KEY in Replit Secrets.");
+    } else {
+      throw new Error(`Failed to generate avatars: ${error.message || error}`);
+    }
+  }
 }

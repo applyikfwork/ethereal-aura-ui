@@ -39,7 +39,7 @@ export const insertUserSchema = z.object({
 export const insertAvatarSchema = z.object({
   userId: z.string(),
   prompt: z.string().min(1),
-  imageUrl: z.string().url(),
+  imageUrl: z.string().min(1),
   stylizedUrl: z.string().nullable().optional(),
   public: z.boolean().optional(),
   gender: z.string().nullable().optional(),

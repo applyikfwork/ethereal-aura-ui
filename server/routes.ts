@@ -1,6 +1,6 @@
 import { Express } from "express";
 import { IStorage } from "./storage";
-import { avatarGenerationSchema, insertAvatarSchema, insertUserSchema } from "../shared/schema";
+import { avatarGenerationSchema, insertAvatarSchema, insertUserSchema, Avatar } from "../shared/schema";
 import { generateMultipleAvatars } from "./gemini";
 
 export function registerRoutes(app: Express, storage: IStorage) {
@@ -82,7 +82,7 @@ export function registerRoutes(app: Express, storage: IStorage) {
       console.log("Generating avatars for user:", userId);
       const imageDataUrls = await generateMultipleAvatars(params, 4);
 
-      const savedAvatars = [];
+      const savedAvatars: Avatar[] = [];
       for (const imageUrl of imageDataUrls) {
         const avatar = await storage.createAvatar({
           userId,

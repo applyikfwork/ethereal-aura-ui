@@ -22,7 +22,7 @@ Aura is a premium AI avatar creation platform powered by Google's Gemini AI and 
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Express.js + Node.js
-- **AI**: Google Gemini 2.0 Flash (Image Generation)
+- **AI**: Google Imagen 4.0 (Image Generation)
 - **Auth & Database**: Supabase
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **State Management**: TanStack Query (React Query)
@@ -208,7 +208,21 @@ This starts both the Express backend (port 5000) and Vite frontend server.
 
 ## Recent Changes (October 29, 2025)
 
-### Latest Update - Email Authentication (October 29, 2025)
+### Latest Update - Avatar Generation Fix (October 29, 2025)
+- ✅ **Fixed Avatar Generation**: Upgraded from deprecated Gemini model to Imagen 4.0
+  - **Issue**: Avatar generation was failing with 500 internal server error
+  - **Root Cause**: Using deprecated `gemini-2.0-flash-preview-image-generation` model
+  - **Solution**: Migrated to production-ready `imagen-4.0-generate-001` model
+  - **Benefits**: 
+    - More reliable and stable image generation
+    - Batch generation support (generates 4 avatars in one API call instead of 4 separate calls)
+    - Better image quality and consistency
+    - Production-ready model with long-term support
+  - Updated `server/gemini.ts` to use `generateImages` API instead of `generateContent`
+  - Added better error handling with specific error messages for quota and API key issues
+  - Fixed TypeScript errors in schema validation for base64 image URLs
+
+### Previous Update - Email Authentication (October 29, 2025)
 - ✅ **Email/Password Authentication**: Added complete email authentication system
   - Created `AuthDialog` component with login and signup forms
   - Implemented using react-hook-form with zodResolver for validation
