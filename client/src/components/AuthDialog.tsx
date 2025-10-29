@@ -114,7 +114,7 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md glass-card">
+      <DialogContent className="sm:max-w-md glass overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-center">
             Welcome to Aura
@@ -125,12 +125,12 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="login" data-testid="tab-login">Login</TabsTrigger>
             <TabsTrigger value="signup" data-testid="tab-signup">Sign Up</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="login" className="space-y-4 mt-4">
+          <TabsContent value="login" className="space-y-4 mt-0">
             <Form {...loginForm}>
               <form onSubmit={loginForm.handleSubmit(handleEmailLogin)} className="space-y-4">
                 <FormField
@@ -213,7 +213,7 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </Button>
           </TabsContent>
 
-          <TabsContent value="signup" className="space-y-4 mt-4">
+          <TabsContent value="signup" className="space-y-4 mt-0">
             <Form {...signupForm}>
               <form onSubmit={signupForm.handleSubmit(handleEmailSignup)} className="space-y-4">
                 <FormField

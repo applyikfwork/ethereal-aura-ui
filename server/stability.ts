@@ -126,13 +126,31 @@ export async function generateMultipleAvatars(
   try {
     console.log(`Generating ${count} avatars with Stability AI`);
 
-    // Stability AI doesn't support batch generation in one call,
-    // so we make multiple parallel requests
-    const promises = Array(count)
-      .fill(null)
-      .map(() => generateAvatar(params));
+    const results: string[] = [];
+    const errors: string[] = [];
 
-    const results = await Promise.all(promises);
+    for (let i = 0; i < count; i++) {
+      try {
+        console.log(`Generating avatar ${i + 1}/${count}`);
+        const result = await generateAvatar(params);
+        results.push(result);
+        
+        if (i < count - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error: any) {
+        console.error(`Failed to generate avatar ${i + 1}:`, error.message);
+        errors.push(error.message);
+      }
+    }
+
+    if (results.length === 0) {
+      throw new Error(`Failed to generate any avatars. Errors: ${errors.join(', ')}`);
+    }
+
+    if (results.length < count) {
+      console.warn(`Only generated ${results.length}/${count} avatars`);
+    }
 
     console.log(`Successfully generated ${results.length} avatars`);
     return results;

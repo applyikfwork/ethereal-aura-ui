@@ -76,11 +76,17 @@ export function registerRoutes(app: Express, storage: IStorage) {
       }
 
       if (!user.premium && user.credits <= 0) {
-        return res.status(403).json({ message: "Insufficient credits" });
+        return res.status(403).json({ message: "Insufficient credits. Please upgrade to Premium or purchase more credits." });
       }
 
       console.log("Generating avatars for user:", userId);
       const imageDataUrls = await generateMultipleAvatars(params, 4);
+
+      if (imageDataUrls.length === 0) {
+        return res.status(500).json({ 
+          message: "Failed to generate any avatars. Please try again or contact support if the issue persists." 
+        });
+      }
 
       const savedAvatars: Avatar[] = [];
       for (const imageUrl of imageDataUrls) {
@@ -104,10 +110,24 @@ export function registerRoutes(app: Express, storage: IStorage) {
         await storage.updateUserCredits(userId, user.credits - 1);
       }
 
-      res.json({ avatars: savedAvatars, creditsRemaining: user.premium ? "unlimited" : user.credits - 1 });
+      const responseMessage = imageDataUrls.length < 4 
+        ? `Generated ${imageDataUrls.length} out of 4 avatars. Some generations failed but your credit was still used.`
+        : undefined;
+
+      res.json({ 
+        avatars: savedAvatars, 
+        creditsRemaining: user.premium ? "unlimited" : user.credits - 1,
+        message: responseMessage 
+      });
     } catch (error: any) {
       console.error("Avatar generation error:", error);
-      res.status(500).json({ message: error.message });
+      const userMessage = error.message.includes("API key") 
+        ? "API configuration error. Please contact support."
+        : error.message.includes("credits")
+        ? "Insufficient API credits. Please contact support."
+        : error.message || "Failed to generate avatars. Please try again.";
+      
+      res.status(500).json({ message: userMessage });
     }
   });
 

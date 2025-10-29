@@ -47,16 +47,20 @@ export default function Studio() {
     onSuccess: (data) => {
       setGeneratedAvatars(data.avatars);
       queryClient.invalidateQueries({ queryKey: ['/api/users', appUser?.id, 'avatars'] });
+      
+      const isPartialSuccess = data.avatars.length < 4;
+      
       toast({
-        title: "✨ Avatars Generated!",
-        description: `Successfully created ${data.avatars.length} avatars. Credits remaining: ${data.creditsRemaining}`,
+        title: isPartialSuccess ? "⚠️ Partial Success" : "✨ Avatars Generated!",
+        description: data.message || `Successfully created ${data.avatars.length} avatar${data.avatars.length > 1 ? 's' : ''}. Credits remaining: ${data.creditsRemaining}`,
+        variant: isPartialSuccess ? "default" : "default",
       });
       setGenerating(false);
     },
     onError: (error: any) => {
       toast({
         title: "Generation Failed",
-        description: error.message || "Failed to generate avatars",
+        description: error.message || "Failed to generate avatars. Please try again.",
         variant: "destructive",
       });
       setGenerating(false);
