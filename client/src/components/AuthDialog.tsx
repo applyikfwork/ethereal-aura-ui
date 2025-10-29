@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,10 +31,25 @@ interface AuthDialogProps {
 }
 
 export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, appUser, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [authInProgress, setAuthInProgress] = useState(false);
+
+  useEffect(() => {
+    if (authInProgress && !authLoading && appUser) {
+      toast({
+        title: "Welcome!",
+        description: "Successfully authenticated",
+      });
+      onOpenChange(false);
+      loginForm.reset();
+      signupForm.reset();
+      setLoading(false);
+      setAuthInProgress(false);
+    }
+  }, [authInProgress, authLoading, appUser]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -74,19 +89,22 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     try {
       setLoading(true);
       await signInWithEmail(data.email, data.password);
-      toast({
-        title: "Welcome Back!",
-        description: "Successfully signed in",
-      });
-      onOpenChange(false);
-      loginForm.reset();
+      
+      setTimeout(() => {
+        toast({
+          title: "Welcome Back!",
+          description: "Successfully signed in",
+        });
+        onOpenChange(false);
+        loginForm.reset();
+        setLoading(false);
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Sign In Failed",
         description: error.message || "Invalid email or password",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -95,19 +113,22 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     try {
       setLoading(true);
       await signUpWithEmail(data.email, data.password, data.name);
-      toast({
-        title: "Account Created!",
-        description: "Please check your email to verify your account",
-      });
-      onOpenChange(false);
-      signupForm.reset();
+      
+      setTimeout(() => {
+        toast({
+          title: "Account Created!",
+          description: "Welcome to Aura! You can now create avatars.",
+        });
+        onOpenChange(false);
+        signupForm.reset();
+        setLoading(false);
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Sign Up Failed",
         description: error.message || "Failed to create account",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
