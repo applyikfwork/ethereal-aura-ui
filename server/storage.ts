@@ -14,6 +14,7 @@ export interface IStorage {
   
   // User methods
   getUser(id: string): Promise<User | undefined>;
+  findOrCreateUser(decodedToken: any): Promise<User | undefined>;
   createUser(user: Omit<User, "uid" | "createdAt">): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<User | undefined>;
   upgradeUser(userId: string): Promise<User | undefined>;
@@ -152,6 +153,35 @@ export class FirestoreStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const doc = await this.db.collection('users').doc(id).get();
     return doc.exists ? (doc.data() as User) : undefined;
+  }
+
+  async findOrCreateUser(decodedToken: any): Promise<User | undefined> {
+    const user = await this.getUser(decodedToken.uid);
+    if (user) {
+      return user;
+    }
+
+    // User doesn't exist, create a new one
+    const newUser: User = {
+      uid: decodedToken.uid,
+      email: decodedToken.email || null,
+      displayName: decodedToken.name || null,
+      photoURL: decodedToken.picture || null,
+      role: 'user', // Default role
+      credits: 10, // Default credits
+      isPremium: false,
+      createdAt: new Date().toISOString(),
+      // Initialize other fields to default values
+      totalLikes: 0,
+      totalShares: 0,
+      totalAvatars: 0,
+      referralCode: `REF-${decodedToken.uid.substring(0, 6).toUpperCase()}`,
+      referralCount: 0,
+      subscribedToNewsletter: false,
+    };
+
+    await this.db.collection('users').doc(decodedToken.uid).set(newUser);
+    return newUser;
   }
 
   async createUser(user: Omit<User, "uid" | "createdAt">): Promise<User> {
@@ -460,6 +490,33 @@ export class MemStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
+  }
+
+  async findOrCreateUser(decodedToken: any): Promise<User | undefined> {
+    const user = this.users.get(decodedToken.uid);
+    if (user) {
+      return user;
+    }
+
+    const newUser: User = {
+      uid: decodedToken.uid,
+      email: decodedToken.email || null,
+      displayName: decodedToken.name || null,
+      photoURL: decodedToken.picture || null,
+      role: 'user',
+      credits: 10,
+      isPremium: false,
+      createdAt: new Date().toISOString(),
+      totalLikes: 0,
+      totalShares: 0,
+      totalAvatars: 0,
+      referralCode: `REF-${decodedToken.uid.substring(0, 6).toUpperCase()}`,
+      referralCount: 0,
+      subscribedToNewsletter: false,
+    };
+
+    this.users.set(decodedToken.uid, newUser);
+    return newUser;
   }
 
   async createUser(user: Omit<User, "uid" | "createdAt">): Promise<User> {

@@ -67,29 +67,31 @@ export function registerRoutes(app: Express, storage: IStorage) {
     try {
       const request = avatarRequestSchema.parse(req.body);
       
-      // Check if user is authenticated
+      // Check if user is authenticated and find or create user document
       const authHeader = req.headers.authorization;
-      let userId: string;
+      let user;
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
           const token = authHeader.split('Bearer ')[1];
           const decodedToken = await (await import('firebase-admin')).auth().verifyIdToken(token);
-          userId = decodedToken.uid; // Use authenticated user ID
+          // This will find the user or create one if it's their first time.
+          user = await storage.findOrCreateUser(decodedToken);
         } catch (error) {
           // Invalid token, treat as guest
-          userId = "demo";
+          user = await storage.getUser("demo");
         }
       } else {
         // No auth header, force guest mode with demo user
-        userId = "demo";
+        user = await storage.getUser("demo");
       }
 
-      // Check user credits
-      const user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        // This should theoretically not happen, especially with demo user fallback.
+        return res.status(500).json({ error: "Could not retrieve user data" });
       }
+
+      const userId = user.uid;
 
       const isPremium = user.isPremium;
       const requestedSize = parseInt(request.size);
