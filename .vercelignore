@@ -1,4 +1,0 @@
-.replit
-.env.local
-dist
-*.timestamp-*.mjs
