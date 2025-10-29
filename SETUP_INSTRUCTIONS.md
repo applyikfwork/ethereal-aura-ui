@@ -78,7 +78,6 @@ The `.env` file handles frontend variables (with VITE_ prefix). The secrets abov
 3. Copy the API key
 4. Add it to Replit Secrets as `GEMINI_API_KEY`
 
-## 🎨 Step 5: Configure Google OAuth (Optional - for Sign In)
 
 1. Go to Supabase Dashboard → **Authentication** → **Providers**
 2. Enable **Google** provider
