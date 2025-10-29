@@ -208,7 +208,24 @@ This starts both the Express backend (port 5000) and Vite frontend server.
 
 ## Recent Changes (October 29, 2025)
 
-### Latest Update - Switched to Stability AI (October 29, 2025)
+### Latest Update - Authentication & Avatar Generation Improvements (October 29, 2025)
+- ✅ **Fixed Authentication Dialog Layout**: Removed hover effects from dialog to prevent card position shifting
+  - Changed `glass-card` to `glass` for stable positioning
+  - Adjusted tab spacing to eliminate layout jumps during login/signup transitions
+  - Added `overflow-hidden` to prevent content overflow issues
+- ✅ **Improved Avatar Generation Reliability**: 
+  - **Sequential Generation**: Changed from parallel to sequential generation with 1-second delays between requests
+  - **Partial Success Support**: System now returns successfully generated avatars even if some fail
+  - **Better Error Handling**: Added specific error messages for API key issues, credit problems, and network errors
+  - **User Feedback**: Toast notifications now show partial success warnings when fewer than 4 avatars are generated
+  - **Resilient Processing**: Each avatar generation is attempted independently, preventing total failure
+- ✅ **Enhanced User Experience**:
+  - Clear error messages for insufficient credits
+  - Informative feedback when some avatars fail to generate
+  - Improved toast notifications with context-aware titles and descriptions
+  - Better pluralization in user-facing messages
+
+### Previous Update - Switched to Stability AI (October 29, 2025)
 - ✅ **Migrated to Stability AI**: Replaced Gemini/Imagen with Stability AI for avatar generation
   - **Change**: Switched from Google's Gemini AI to Stability AI's Stable Diffusion
   - **Reason**: User requested to use Stability AI instead of Gemini
