@@ -1,3 +1,4 @@
+import FormData from "form-data";
 import type { AvatarGenerationParams } from "../shared/schema";
 
 // Lazy-load to ensure environment variables are ready
@@ -51,30 +52,24 @@ function buildNegativePrompt(): string {
   return "blurry, distorted, ugly, multiple faces, multiple people, text, watermark, nsfw, deformed, low quality, bad anatomy, extra limbs, disfigured, poor composition, cropped, out of frame";
 }
 
-function getStylePreset(artStyle: string): string {
-  const styleMap: Record<string, string> = {
-    realistic: "photographic",
-    anime: "anime",
-    fantasy: "fantasy-art",
-    cartoon: "comic-book",
-    cyberpunk: "neon-punk",
-  };
-  return styleMap[artStyle] || "digital-art";
-}
-
 export async function generateAvatar(
   params: AvatarGenerationParams
 ): Promise<string> {
   try {
     const prompt = buildAvatarPrompt(params);
     const negativePrompt = buildNegativePrompt();
-    const stylePreset = getStylePreset(params.artStyle);
 
     console.log("Generating avatar with Stability AI");
     console.log("Prompt:", prompt);
-    console.log("Style:", stylePreset);
 
     const key = getApiKey();
+
+    // Create FormData for multipart/form-data request
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+    formData.append("negative_prompt", negativePrompt);
+    formData.append("aspect_ratio", "1:1");
+    formData.append("output_format", "png");
 
     // Use Stability AI v2beta API for image generation
     const response = await fetch(
@@ -83,16 +78,10 @@ export async function generateAvatar(
         method: "POST",
         headers: {
           "Authorization": `Bearer ${key}`,
-          "Content-Type": "application/json",
           "Accept": "application/json",
+          ...formData.getHeaders(),
         },
-        body: JSON.stringify({
-          prompt: prompt,
-          negative_prompt: negativePrompt,
-          aspect_ratio: "1:1",
-          output_format: "png",
-          style_preset: stylePreset,
-        }),
+        body: formData as any,
       }
     );
 
@@ -122,7 +111,7 @@ export async function generateAvatar(
   } catch (error: any) {
     console.error("Failed to generate avatar:", error);
     
-    if (error.message.includes("fetch")) {
+    if (error.message && error.message.includes("fetch")) {
       throw new Error("Network error connecting to Stability AI. Please check your internet connection.");
     }
     
