@@ -39,9 +39,12 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   useEffect(() => {
     if (authInProgress && !authLoading && appUser) {
+      const isNewUser = activeTab === "signup";
       toast({
-        title: "Welcome!",
-        description: "Successfully authenticated",
+        title: isNewUser ? "Account Created!" : "Welcome Back!",
+        description: isNewUser 
+          ? "Welcome to Aura! You can now create avatars." 
+          : "Successfully signed in",
       });
       onOpenChange(false);
       loginForm.reset();
@@ -49,7 +52,7 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       setLoading(false);
       setAuthInProgress(false);
     }
-  }, [authInProgress, authLoading, appUser]);
+  }, [authInProgress, authLoading, appUser, activeTab]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -72,33 +75,24 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      setAuthInProgress(true);
       await signInWithGoogle();
-      onOpenChange(false);
     } catch (error: any) {
       toast({
         title: "Sign In Failed",
         description: error.message || "Failed to sign in with Google",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
+      setAuthInProgress(false);
     }
   };
 
   const handleEmailLogin = async (data: LoginFormData) => {
     try {
       setLoading(true);
+      setAuthInProgress(true);
       await signInWithEmail(data.email, data.password);
-      
-      setTimeout(() => {
-        toast({
-          title: "Welcome Back!",
-          description: "Successfully signed in",
-        });
-        onOpenChange(false);
-        loginForm.reset();
-        setLoading(false);
-      }, 1000);
     } catch (error: any) {
       toast({
         title: "Sign In Failed",
@@ -106,23 +100,28 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         variant: "destructive",
       });
       setLoading(false);
+      setAuthInProgress(false);
     }
   };
 
   const handleEmailSignup = async (data: SignupFormData) => {
     try {
       setLoading(true);
-      await signUpWithEmail(data.email, data.password, data.name);
+      setAuthInProgress(true);
+      const result = await signUpWithEmail(data.email, data.password, data.name);
       
-      setTimeout(() => {
+      // Check if email confirmation is required
+      if (result?.user && !result?.session) {
         toast({
-          title: "Account Created!",
-          description: "Welcome to Aura! You can now create avatars.",
+          title: "Check Your Email",
+          description: "Please check your email to confirm your account before signing in.",
         });
-        onOpenChange(false);
         signupForm.reset();
         setLoading(false);
-      }, 1000);
+        setAuthInProgress(false);
+        onOpenChange(false);
+      }
+      // If session exists, the useEffect will handle the success flow
     } catch (error: any) {
       toast({
         title: "Sign Up Failed",
@@ -130,6 +129,7 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         variant: "destructive",
       });
       setLoading(false);
+      setAuthInProgress(false);
     }
   };
 
